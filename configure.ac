@@ -11,8 +11,7 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 
-PKG_CHECK_MODULES([DEPS], [gtk+-3.0])
-AM_PATH_GTK_3_0([3.0.0],,AC_MSG_ERROR([Gtk+ 3 required.]))
+PKG_CHECK_MODULES(GTK, gtk+-3.0)
 
 
 
