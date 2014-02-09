@@ -31,12 +31,13 @@ G_BEGIN_DECLS
 #define GTKGL_TYPE_CANVAS (gtkgl_canvas_get_type())
 #define GTKGL_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), GTKGL_TYPE_CANVAS, GtkGLCanvas))
 #define GTKGL_IS_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_TYPE((obj), GTKGL_TYPE_CANVAS))
-#define GTKGL_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass), TE_TYPE_GTKGL, GtkGLCanvasClass)
-#define GTKGL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), TE_TYPE_GTKGL_CANVAS_CLASS))
-#define GTKGL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), TE_TYPE_GTKGL, GtkGLCanvasClass))
+#define GTKGL_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass), GTKGL_TYPE_CANVAS, GtkGLCanvasClass)
+#define GTKGL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), GTKGL_TYPE_CANVAS_CLASS))
+#define GTKGL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTKGL_TYPE_CANVAS, GtkGLCanvasClass))
 
 typedef struct _GtkGLCanvas GtkGLCanvas;
 typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
+typedef struct _GtkGLAttributes GtkGLAttributes;
 
 struct _GtkGLCanvas {
     GtkWidget parent_instance;
@@ -46,8 +47,22 @@ struct _GtkGLCanvasClass {
     GtkWidgetClass parent_class;
 };
 
+
+enum
+{
+	GTKGL_DOUBLE_BUFFERED = 1,
+	GTKGL_STEREO = 2,
+	GTKGL_SAMPLE_BUFFERS = 4
+};
+
+struct _GtkGLAttributes {
+	unsigned flags;
+	unsigned num_samples;
+	unsigned depth_buffer_bits;
+};
+
 GType gtkgl_canvas_get_type(void);
-GtkGLCanvas *gtkgl_canvas_new();
+GtkWidget *gtkgl_canvas_new(const GtkGLAttributes *attrs);
 
 void gtkgl_canvas_make_current(GtkGLCanvas*);
 void gtkgl_canvas_swap_buffers(GtkGLCanvas*);

@@ -43,6 +43,7 @@ struct _GtkGLCanvas_Priv {
     Display *xdis;
     Window xwin;
     GLXContext glc;
+	GtkGLAttributes attrs;
 };
 
 typedef struct _GtkGLCanvas_Priv GtkGLCanvas_Priv;
@@ -69,15 +70,23 @@ gtkgl_canvas_draw(GtkWidget *wid, cairo_t *cr)
 static void
 gtkgl_canvas_realize(GtkWidget *wid)
 {
-    GtkGLCanvas_Priv *priv;
     GtkGLCanvas *gtkgl = GTKGL_CANVAS(wid);
+    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(gtkgl);
     GdkWindowAttr attributes;
     GtkAllocation allocation;
     gint attributes_mask;
     XVisualInfo *vi;
-    GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+    int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, priv->attrs.depth_buffer_bits, 
+		GLX_SAMPLES, (int) priv->attrs.num_samples,
+		None, None, None, None };
+	int *att_ptr = att+5;
 
-    priv = GTKGL_CANVAS_GET_PRIV(gtkgl);
+	if (priv->attrs.flags & GTKGL_DOUBLE_BUFFERED)
+		*att_ptr++ = GLX_DOUBLEBUFFER;
+	if (priv->attrs.flags & GTKGL_STEREO)
+		*att_ptr++ = GLX_STEREO;
+	if (priv->attrs.flags & GTKGL_SAMPLE_BUFFERS) 
+		*att_ptr++ = GLX_SAMPLE_BUFFERS;
 
     gtk_widget_set_realized(wid, TRUE);
     gtk_widget_get_allocation(wid, &allocation);
@@ -209,14 +218,17 @@ gtkgl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
                     allocation->width, allocation->height);
         }
 
-        te_gtkgl_send_configure(wid);
+        gtkgl_canvas_send_configure(wid);
     }
 }
 
-GtkGLCanvas*
-gtkgl_canvas_new()
+GtkWidget*
+gtkgl_canvas_new(const GtkGLAttributes *attrs)
 {
-    return (GtkGLCanvas*) g_object_new(GTKGL_TYPE_CANVAS, NULL);
+    GtkGLCanvas* canvas = g_object_new(GTKGL_TYPE_CANVAS, NULL);
+    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(canvas);
+	priv->attrs = *attrs;
+	return GTK_WIDGET(canvas);
 }
 
 void

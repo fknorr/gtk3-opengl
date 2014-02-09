@@ -1,6 +1,6 @@
 # Automake
 
-bin_PROGRAMS = example
+check_PROGRAMS = example
 
 example_SOURCES = \
 	main.c
