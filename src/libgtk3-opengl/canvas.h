@@ -54,12 +54,12 @@
 
 G_BEGIN_DECLS
 
-#define GTKGL_TYPE_CANVAS (gtkgl_canvas_get_type())
-#define GTKGL_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), GTKGL_TYPE_CANVAS, GtkGLCanvas))
-#define GTKGL_IS_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_TYPE((obj), GTKGL_TYPE_CANVAS))
-#define GTKGL_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass), GTKGL_TYPE_CANVAS, GtkGLCanvasClass)
-#define GTKGL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), GTKGL_TYPE_CANVAS_CLASS))
-#define GTKGL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTKGL_TYPE_CANVAS, GtkGLCanvasClass))
+#define GTK_GL_TYPE_CANVAS (gtk_gl_canvas_get_type())
+#define GTK_GL_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvas))
+#define GTK_GL_IS_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_TYPE((obj), GTK_GL_TYPE_CANVAS))
+#define GTK_GL_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass), GTK_GL_TYPE_CANVAS, GtkGLCanvasClass)
+#define GTK_GL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), GTK_GL_TYPE_CANVAS_CLASS))
+#define GTK_GL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvasClass))
 
 typedef struct _GtkGLCanvas GtkGLCanvas;
 typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
@@ -72,11 +72,11 @@ struct _GtkGLCanvasClass {
     GtkWidgetClass parent_class;
 };
 
-GType gtkgl_canvas_get_type(void);
-GtkWidget *gtkgl_canvas_new(const GtkGLAttributes *attrs);
+GType gtk_gl_canvas_get_type(void);
+GtkWidget *gtk_gl_canvas_new(const GtkGLAttributes *attrs);
 
-void gtkgl_canvas_make_current(GtkGLCanvas*);
-void gtkgl_canvas_swap_buffers(GtkGLCanvas*);
+void gtk_gl_canvas_make_current(GtkGLCanvas*);
+void gtk_gl_canvas_swap_buffers(GtkGLCanvas*);
 
 G_END_DECLS
 

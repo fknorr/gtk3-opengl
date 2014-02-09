@@ -81,7 +81,7 @@ gboolean draw_the_gl(gpointer ud) {
 
     // this is very important, as OpenGL has a somewhat global state. 
     // this will set the OpenGL state to this very widget.
-    gtkgl_canvas_make_current(GTKGL_CANVAS(gl));
+    gtk_gl_canvas_make_current(GTK_GL_CANVAS(gl));
 
     // some triangle rotation stuff
     s += 0.03f;
@@ -102,7 +102,7 @@ gboolean draw_the_gl(gpointer ud) {
     glClearColor(0, 0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    //glRotatef(cos(s)*360.f-180.f, 0.f, 0.f, 1.0);
+    glRotatef(cos(s)*360.f-180.f, 0.f, 0.f, 1.0);
     glColor4ub(0xed, 0xb9, 0x1e, 0xff);
     glBegin(GL_TRIANGLES);
     glVertex2f(-0.7f, -0.5f);
@@ -111,7 +111,7 @@ gboolean draw_the_gl(gpointer ud) {
     glEnd();
 
     // this is also very important
-    gtkgl_canvas_swap_buffers(GTKGL_CANVAS(gl));
+    gtk_gl_canvas_swap_buffers(GTK_GL_CANVAS(gl));
     return TRUE;
 }
 
@@ -129,9 +129,9 @@ click_the_button(GtkWidget *bt, gpointer ud) {
         do_the_gl = 0;
         gtk_container_remove(GTK_CONTAINER(grid), gl);
 
-		GtkGLAttributes attrs = { GTKGL_DOUBLE_BUFFERED | GTKGL_SAMPLE_BUFFERS,
+		GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
 			8, 24 };
-        gl = gtkgl_canvas_new(&attrs);
+        gl = gtk_gl_canvas_new(&attrs);
         gtk_widget_set_size_request(gl, 200, 200);
         gtk_grid_attach(GTK_GRID(grid), gl, 0, 1, 1, 1);
 
@@ -142,7 +142,7 @@ click_the_button(GtkWidget *bt, gpointer ud) {
         gdk_window_process_all_updates();
     }
 
-    // gl = te_gtkgl_new();
+    // gl = te_gtk_gl_new();
     // gl = gtk_grid_get_child_at(GTK_GRID(grid), 0, 1);
 }
 
@@ -159,9 +159,9 @@ int main(int argc, char *argv[]) {
     g_signal_connect(G_OBJECT(win), "destroy", G_CALLBACK(gtk_main_quit), 0);
 
     // create the OpenGL widget
-	GtkGLAttributes attrs = { GTKGL_DOUBLE_BUFFERED | GTKGL_SAMPLE_BUFFERS,
+	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
 		8, 24 };
-    g_gl_wid = gl = gtkgl_canvas_new(&attrs);
+    g_gl_wid = gl = gtk_gl_canvas_new(&attrs);
 
     bt1 = gtk_button_new_with_label("one");
     g_signal_connect(G_OBJECT(bt1), "clicked", G_CALLBACK(click_the_button), (gpointer)&cnt);

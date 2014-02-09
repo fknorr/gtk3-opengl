@@ -31,16 +31,19 @@ struct _GtkGLCanvas_Priv {
     GdkWindow *win;
 	GtkGLAttributes attrs;
 	GtkGLCanvas_NativePriv *native;
+	gboolean is_dummy;
 	unsigned effective_depth;
 };
 
 
-GtkGLCanvas_NativePriv *gtkgl_canvas_native_new(void);
-void gtkgl_canvas_native_create_context(GtkGLCanvas_Priv *priv);
-void gtkgl_canvas_native_attach_context(GtkGLCanvas_Priv *priv);
-void gtkgl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv);
+GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
+void gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv);
+void gtk_gl_canvas_native_attach_context(GtkGLCanvas_Priv *priv);
+void gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv);
+void gtk_gl_canvas_native_swap_buffers(GtkGLCanvas_Priv *priv);
+void gtk_gl_canvas_native_make_current(GtkGLCanvas_Priv *priv);
 
 
-#define GTKGL_CANVAS_GET_PRIV(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE((obj), GTKGL_TYPE_CANVAS, GtkGLCanvas_Priv))
+#define GTK_GL_CANVAS_GET_PRIV(obj) \
+	(G_TYPE_INSTANCE_GET_PRIVATE((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvas_Priv))
 

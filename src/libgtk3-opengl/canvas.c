@@ -56,16 +56,16 @@
 #include <stdlib.h>
 
 
-G_DEFINE_TYPE(GtkGLCanvas, gtkgl_canvas, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(GtkGLCanvas, gtk_gl_canvas, GTK_TYPE_WIDGET)
 
-static void gtkgl_canvas_realize (GtkWidget *wid);
-static void gtkgl_canvas_unrealize (GtkWidget *wid);
-static void gtkgl_canvas_send_configure(GtkWidget *wid);
-static void gtkgl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation);
-static gboolean gtkgl_canvas_draw(GtkWidget *wid, cairo_t *cr);
+static void gtk_gl_canvas_realize (GtkWidget *wid);
+static void gtk_gl_canvas_unrealize (GtkWidget *wid);
+static void gtk_gl_canvas_send_configure(GtkWidget *wid);
+static void gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation);
+static gboolean gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr);
 
 static gboolean
-gtkgl_canvas_draw(GtkWidget *wid, cairo_t *cr)
+gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr)
 {
     return FALSE;
 }
@@ -73,18 +73,18 @@ gtkgl_canvas_draw(GtkWidget *wid, cairo_t *cr)
 
 
 static void
-gtkgl_canvas_finalize(GObject *obj)
+gtk_gl_canvas_finalize(GObject *obj)
 {
-	GtkGLCanvas *canvas = GTKGL_CANVAS(obj);
-	GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas *canvas = GTK_GL_CANVAS(obj);
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	free(priv->native);
 	
-    G_OBJECT_CLASS(gtkgl_canvas_parent_class)->finalize(obj);
+    G_OBJECT_CLASS(gtk_gl_canvas_parent_class)->finalize(obj);
 }
 
 
 static void
-gtkgl_canvas_class_init(GtkGLCanvasClass *klass)
+gtk_gl_canvas_class_init(GtkGLCanvasClass *klass)
 {
     GtkWidgetClass *wklass;
     GObjectClass *oklass;
@@ -92,32 +92,36 @@ gtkgl_canvas_class_init(GtkGLCanvasClass *klass)
     g_type_class_add_private(klass, sizeof(GtkGLCanvas_Priv));
     wklass = GTK_WIDGET_CLASS(klass);
 
-    wklass->realize = gtkgl_canvas_realize;
-    wklass->unrealize = gtkgl_canvas_unrealize;
-    wklass->size_allocate = gtkgl_canvas_size_allocate;
-    wklass->draw = gtkgl_canvas_draw;
+    wklass->realize = gtk_gl_canvas_realize;
+    wklass->unrealize = gtk_gl_canvas_unrealize;
+    wklass->size_allocate = gtk_gl_canvas_size_allocate;
+    wklass->draw = gtk_gl_canvas_draw;
 
     oklass = (GObjectClass*) klass;
-    oklass->finalize = gtkgl_canvas_finalize;
+    oklass->finalize = gtk_gl_canvas_finalize;
 }
 
 
 void
-gtkgl_canvas_realize(GtkWidget *wid)
+gtk_gl_canvas_realize(GtkWidget *wid)
 {
-    GtkGLCanvas *gtkgl = GTKGL_CANVAS(wid);
-    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(gtkgl);
-	GtkGLCanvas_NativePriv *native = GTKGL_CANVAS_GET_PRIV(gtkgl)->native;
+    GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
+	GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(gtkgl)->native;
     GdkWindowAttr attributes;
     GtkAllocation allocation;
     gint attributes_mask;
+	static GdkRGBA black = { 0, 0, 0, 1 };
 
     gtk_widget_set_realized(wid, TRUE);
     gtk_widget_get_allocation(wid, &allocation);
 
     priv->disp = gdk_display_get_default();
-	
-	gtkgl_canvas_native_create_context(priv);
+
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_create_context(priv);
+	else
+		priv->effective_depth = 24;
 	
     attributes.window_type = GDK_WINDOW_CHILD;
     attributes.x = allocation.x;
@@ -133,34 +137,38 @@ gtkgl_canvas_realize(GtkWidget *wid)
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, attributes_mask);
     gdk_window_set_user_data(priv->win, wid);
+	gdk_window_set_background_rgba(priv->win, &black);
     gtk_widget_set_window(wid, priv->win);
     g_object_ref(wid);
 
-	gtkgl_canvas_native_attach_context(priv);
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_attach_context(priv);
 
-    gtkgl_canvas_send_configure(wid);
+    gtk_gl_canvas_send_configure(wid);
 }
 
 
 void
-gtkgl_canvas_unrealize(GtkWidget *wid)
+gtk_gl_canvas_unrealize(GtkWidget *wid)
 {
-    GtkGLCanvas *gtkgl = GTKGL_CANVAS(wid);
-    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(gtkgl);
+    GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
 
-	gtkgl_canvas_native_destroy_context(priv);
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_destroy_context(priv);
 
-    GTK_WIDGET_CLASS(gtkgl_canvas_parent_class)->unrealize(wid);
+    GTK_WIDGET_CLASS(gtk_gl_canvas_parent_class)->unrealize(wid);
 }
 
 
 static void
-gtkgl_canvas_init(GtkGLCanvas *self)
+gtk_gl_canvas_init(GtkGLCanvas *self)
 {
     GtkWidget *wid = (GtkWidget*)self;
-    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(wid);
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	
-	priv->native = gtkgl_canvas_native_new();
+	priv->native = gtk_gl_canvas_native_new();
+	priv->is_dummy = TRUE;
 
     gtk_widget_set_can_focus(wid, TRUE);
     gtk_widget_set_receives_default(wid, TRUE);
@@ -170,7 +178,7 @@ gtkgl_canvas_init(GtkGLCanvas *self)
 
 
 static void
-gtkgl_canvas_send_configure(GtkWidget *wid)
+gtk_gl_canvas_send_configure(GtkWidget *wid)
 {
     GtkAllocation allocation;
     GdkEvent *event = gdk_event_new(GDK_CONFIGURE);
@@ -190,9 +198,9 @@ gtkgl_canvas_send_configure(GtkWidget *wid)
 
 
 static void
-gtkgl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
+gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
 {
-    g_return_if_fail(GTKGL_IS_CANVAS(wid));
+    g_return_if_fail(GTK_GL_IS_CANVAS(wid));
     g_return_if_fail(allocation != NULL);
 
     gtk_widget_set_allocation(wid, allocation);
@@ -205,16 +213,42 @@ gtkgl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
                     allocation->width, allocation->height);
         }
 
-        gtkgl_canvas_send_configure(wid);
+        gtk_gl_canvas_send_configure(wid);
     }
 }
 
 GtkWidget*
-gtkgl_canvas_new(const GtkGLAttributes *attrs)
+gtk_gl_canvas_new(const GtkGLAttributes *attrs)
 {
-    GtkGLCanvas* canvas = g_object_new(GTKGL_TYPE_CANVAS, NULL);
-    GtkGLCanvas_Priv *priv = GTKGL_CANVAS_GET_PRIV(canvas);
-	priv->attrs = *attrs;
+    GtkGLCanvas* canvas = g_object_new(GTK_GL_TYPE_CANVAS, NULL);
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	
+	if (attrs)
+	{
+		priv->attrs = *attrs;
+		priv->is_dummy = FALSE;
+	}
+	
 	return GTK_WIDGET(canvas);
+}
+
+
+void
+gtk_gl_canvas_make_current(GtkGLCanvas *wid)
+{
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
+		
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_make_current(priv);
+}
+
+
+void
+gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
+{
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
+
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_swap_buffers(priv);
 }
 

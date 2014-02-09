@@ -22,9 +22,9 @@
 
 enum
 {
-	GTKGL_DOUBLE_BUFFERED = 1,
-	GTKGL_STEREO = 2,
-	GTKGL_SAMPLE_BUFFERS = 4
+	GTK_GL_DOUBLE_BUFFERED = 1,
+	GTK_GL_STEREO = 2,
+	GTK_GL_SAMPLE_BUFFERS = 4
 };
 
 typedef struct _GtkGLAttributes GtkGLAttributes;

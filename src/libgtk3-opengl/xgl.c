@@ -75,7 +75,7 @@ struct _GtkGLCanvas_NativePriv
 
 
 GtkGLCanvas_NativePriv*
-gtkgl_canvas_native_new()
+gtk_gl_canvas_native_new()
 {
 	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
     native->xdis = NULL;
@@ -84,7 +84,7 @@ gtkgl_canvas_native_new()
 
 
 void 
-gtkgl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
 {
 	GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
@@ -93,11 +93,11 @@ gtkgl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
 		None, None, None, None };
 	int *att_ptr = att+5;
 
-	if (priv->attrs.flags & GTKGL_DOUBLE_BUFFERED)
+	if (priv->attrs.flags & GTK_GL_DOUBLE_BUFFERED)
 		*att_ptr++ = GLX_DOUBLEBUFFER;
-	if (priv->attrs.flags & GTKGL_STEREO)
+	if (priv->attrs.flags & GTK_GL_STEREO)
 		*att_ptr++ = GLX_STEREO;
-	if (priv->attrs.flags & GTKGL_SAMPLE_BUFFERS) 
+	if (priv->attrs.flags & GTK_GL_SAMPLE_BUFFERS) 
 		*att_ptr++ = GLX_SAMPLE_BUFFERS;
 	
     native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
@@ -108,7 +108,7 @@ gtkgl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
 
 
 void 
-gtkgl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
 {
 	GtkGLCanvas_NativePriv *native = priv->native;
     native->xwin = gdk_x11_window_get_xid(priv->win);
@@ -116,7 +116,7 @@ gtkgl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
 
 
 void 
-gtkgl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
 {
 	GtkGLCanvas_NativePriv *native = priv->native;
 	
@@ -130,17 +130,17 @@ gtkgl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
 
 
 void
-gtkgl_canvas_make_current(GtkGLCanvas *wid)
+gtk_gl_canvas_native_make_current(GtkGLCanvas_Priv *priv)
 {
-    GtkGLCanvas_NativePriv *native = GTKGL_CANVAS_GET_PRIV(wid)->native;
+    GtkGLCanvas_NativePriv *native = priv->native;
     glXMakeCurrent(native->xdis, native->xwin, native->glc);
 }
 
 
 void
-gtkgl_canvas_swap_buffers(GtkGLCanvas *wid)
+gtk_gl_canvas_native_swap_buffers(GtkGLCanvas_Priv *priv)
 {
-    GtkGLCanvas_NativePriv *native = GTKGL_CANVAS_GET_PRIV(wid)->native;
+    GtkGLCanvas_NativePriv *native = priv->native;
     glXSwapBuffers(native->xdis, native->xwin);
 }
 
