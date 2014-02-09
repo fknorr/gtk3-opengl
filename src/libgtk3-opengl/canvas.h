@@ -47,100 +47,37 @@
  **/
 
 
-#include "canvas.h"
-#include "canvas_impl.h"
-#include <stdlib.h>
+#pragma once
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <X11/Xatom.h>
-#include <X11/keysym.h>
-
-#include <X11/extensions/xf86vmode.h>
-
-#include <GL/glx.h>
 #include <gtk/gtk.h>
-#include <gdk/gdkx.h>
-#include <glib-object.h>
+#include "attributes.h"
 
+G_BEGIN_DECLS
 
-struct _GtkGLCanvas_NativePriv 
-{	
-    Display *xdis;
-    Window xwin;
-    GLXContext glc;
+#define GTKGL_TYPE_CANVAS (gtkgl_canvas_get_type())
+#define GTKGL_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), GTKGL_TYPE_CANVAS, GtkGLCanvas))
+#define GTKGL_IS_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_TYPE((obj), GTKGL_TYPE_CANVAS))
+#define GTKGL_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST((klass), GTKGL_TYPE_CANVAS, GtkGLCanvasClass)
+#define GTKGL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), GTKGL_TYPE_CANVAS_CLASS))
+#define GTKGL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTKGL_TYPE_CANVAS, GtkGLCanvasClass))
+
+typedef struct _GtkGLCanvas GtkGLCanvas;
+typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
+
+struct _GtkGLCanvas {
+    GtkWidget parent_instance;
 };
 
+struct _GtkGLCanvasClass {
+    GtkWidgetClass parent_class;
+};
 
-GtkGLCanvas_NativePriv*
-gtkgl_canvas_native_new()
-{
-	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
-    native->xdis = NULL;
-	return native;
-}
+GType gtkgl_canvas_get_type(void);
+GtkWidget *gtkgl_canvas_new(const GtkGLAttributes *attrs);
 
+void gtkgl_canvas_make_current(GtkGLCanvas*);
+void gtkgl_canvas_swap_buffers(GtkGLCanvas*);
 
-void 
-gtkgl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
-{
-	GtkGLCanvas_NativePriv *native = priv->native;
-    XVisualInfo *vi;
-    int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, priv->attrs.depth_buffer_bits, 
-		GLX_SAMPLES, (int) priv->attrs.num_samples,
-		None, None, None, None };
-	int *att_ptr = att+5;
+G_END_DECLS
 
-	if (priv->attrs.flags & GTKGL_DOUBLE_BUFFERED)
-		*att_ptr++ = GLX_DOUBLEBUFFER;
-	if (priv->attrs.flags & GTKGL_STEREO)
-		*att_ptr++ = GLX_STEREO;
-	if (priv->attrs.flags & GTKGL_SAMPLE_BUFFERS) 
-		*att_ptr++ = GLX_SAMPLE_BUFFERS;
-	
-    native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
-    vi = glXChooseVisual(native->xdis, 0, att);
-    native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);	
-	priv->effective_depth = vi->depth;
-}
-
-
-void 
-gtkgl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
-{
-	GtkGLCanvas_NativePriv *native = priv->native;
-    native->xwin = gdk_x11_window_get_xid(priv->win);
-}
-
-
-void 
-gtkgl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
-{
-	GtkGLCanvas_NativePriv *native = priv->native;
-	
-    if (native->xdis) {
-        glXDestroyContext(native->xdis, native->glc);
-        // g_clear_object((volatile GObject**)&priv->win);
-
-        native->xdis = NULL;
-    }
-}
-
-
-void
-gtkgl_canvas_make_current(GtkGLCanvas *wid)
-{
-    GtkGLCanvas_NativePriv *native = GTKGL_CANVAS_GET_PRIV(wid)->native;
-    glXMakeCurrent(native->xdis, native->xwin, native->glc);
-}
-
-
-void
-gtkgl_canvas_swap_buffers(GtkGLCanvas *wid)
-{
-    GtkGLCanvas_NativePriv *native = GTKGL_CANVAS_GET_PRIV(wid)->native;
-    glXSwapBuffers(native->xdis, native->xwin);
-}
 

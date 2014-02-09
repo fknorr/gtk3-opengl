@@ -18,15 +18,17 @@ lib_LTLIBRARIES =  \
 	libgtk3-opengl.la
 
 if PLATFORM_WIN32
-libgtk3_opengl_la_SOURCES = \
-	wgl.c
+platform_sources = wgl.c
 else
-libgtk3_opengl_la_SOURCES = \
-	xgl.c
+platform_sources = xgl.c
 endif
 
+libgtk3_opengl_la_SOURCES = \
+	canvas.c \
+	$(platform_sources)
+
 gtkgldir = $(includedir)/gtkgl
-gtkgldir_HEADERS = canvas.h
+gtkgl_HEADERS = canvas.h attributes.h
 
 libgtk3_opengl_la_CPPFLAGS = @GTK_CFLAGS@
 libgtk3_opengl_la_LIBADD = @GTK_LIBS@
