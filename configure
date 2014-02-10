@@ -655,6 +655,9 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+GLADEUI_CATDIR
+HAVE_GLADEUI_FALSE
+HAVE_GLADEUI_TRUE
 NATIVE_WIN32_FALSE
 NATIVE_WIN32_TRUE
 PLATFORM_WIN32_FALSE
@@ -667,6 +670,12 @@ build_os
 build_vendor
 build_cpu
 build
+GLADEUI_LIBS
+GLADEUI_CFLAGS
+X11_LIBS
+X11_CFLAGS
+GL_LIBS
+GL_CFLAGS
 GTK_LIBS
 GTK_CFLAGS
 PKG_CONFIG_LIBDIR
@@ -780,6 +789,12 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 GTK_CFLAGS
 GTK_LIBS
+GL_CFLAGS
+GL_LIBS
+X11_CFLAGS
+X11_LIBS
+GLADEUI_CFLAGS
+GLADEUI_LIBS
 CPP'
 
 
@@ -1435,6 +1450,14 @@ Some influential environment variables:
               path overriding pkg-config's built-in search path
   GTK_CFLAGS  C compiler flags for GTK, overriding pkg-config
   GTK_LIBS    linker flags for GTK, overriding pkg-config
+  GL_CFLAGS   C compiler flags for GL, overriding pkg-config
+  GL_LIBS     linker flags for GL, overriding pkg-config
+  X11_CFLAGS  C compiler flags for X11, overriding pkg-config
+  X11_LIBS    linker flags for X11, overriding pkg-config
+  GLADEUI_CFLAGS
+              C compiler flags for GLADEUI, overriding pkg-config
+  GLADEUI_LIBS
+              linker flags for GLADEUI, overriding pkg-config
   CPP         C preprocessor
 
 Use these variables to override the choices made by `configure' or to help
@@ -4033,6 +4056,259 @@ $as_echo "yes" >&6; }
 
 fi
 
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GL" >&5
+$as_echo_n "checking for GL... " >&6; }
+
+if test -n "$GL_CFLAGS"; then
+    pkg_cv_GL_CFLAGS="$GL_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gl\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gl") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GL_CFLAGS=`$PKG_CONFIG --cflags "gl" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GL_LIBS"; then
+    pkg_cv_GL_LIBS="$GL_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gl\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gl") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GL_LIBS=`$PKG_CONFIG --libs "gl" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gl" 2>&1`
+        else
+	        GL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gl" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GL_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (gl) were not met:
+
+$GL_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables GL_CFLAGS
+and GL_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables GL_CFLAGS
+and GL_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	GL_CFLAGS=$pkg_cv_GL_CFLAGS
+	GL_LIBS=$pkg_cv_GL_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for X11" >&5
+$as_echo_n "checking for X11... " >&6; }
+
+if test -n "$X11_CFLAGS"; then
+    pkg_cv_X11_CFLAGS="$X11_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"x11\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "x11") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_X11_CFLAGS=`$PKG_CONFIG --cflags "x11" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$X11_LIBS"; then
+    pkg_cv_X11_LIBS="$X11_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"x11\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "x11") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_X11_LIBS=`$PKG_CONFIG --libs "x11" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        X11_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "x11" 2>&1`
+        else
+	        X11_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "x11" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$X11_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (x11) were not met:
+
+$X11_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables X11_CFLAGS
+and X11_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables X11_CFLAGS
+and X11_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	X11_CFLAGS=$pkg_cv_X11_CFLAGS
+	X11_LIBS=$pkg_cv_X11_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLADEUI" >&5
+$as_echo_n "checking for GLADEUI... " >&6; }
+
+if test -n "$GLADEUI_CFLAGS"; then
+    pkg_cv_GLADEUI_CFLAGS="$GLADEUI_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gladeui-2.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gladeui-2.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GLADEUI_CFLAGS=`$PKG_CONFIG --cflags "gladeui-2.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GLADEUI_LIBS"; then
+    pkg_cv_GLADEUI_LIBS="$GLADEUI_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gladeui-2.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gladeui-2.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GLADEUI_LIBS=`$PKG_CONFIG --libs "gladeui-2.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GLADEUI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gladeui-2.0" 2>&1`
+        else
+	        GLADEUI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gladeui-2.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GLADEUI_PKG_ERRORS" >&5
+
+	ac_gladeui_catdir=; have_glade=no
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	ac_gladeui_catdir=; have_glade=no
+else
+	GLADEUI_CFLAGS=$pkg_cv_GLADEUI_CFLAGS
+	GLADEUI_LIBS=$pkg_cv_GLADEUI_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`
+fi
 
 
 # Make sure we can run config.sub.
@@ -4121,6 +4397,7 @@ case $host_os in
     native_win32=no
     ;;
 esac
+
  if test x"$platform_win32" = "xyes"; then
   PLATFORM_WIN32_TRUE=
   PLATFORM_WIN32_FALSE='#'
@@ -4137,6 +4414,16 @@ else
   NATIVE_WIN32_FALSE=
 fi
 
+ if test x"$have_glade" = "xyes"; then
+  HAVE_GLADEUI_TRUE=
+  HAVE_GLADEUI_FALSE='#'
+else
+  HAVE_GLADEUI_TRUE='#'
+  HAVE_GLADEUI_FALSE=
+fi
+
+
+GLADEUI_CATDIR="$ac_gladeui_catdir"
 
 
 case `pwd` in
@@ -11940,9 +12227,6 @@ CC="$lt_save_CC"
 
 
 
-
-
-
 ac_config_files="$ac_config_files Makefile src/Makefile src/libgtk3-opengl/Makefile src/example/Makefile"
 
 cat >confcache <<\_ACEOF
@@ -12084,6 +12368,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NATIVE_WIN32_TRUE}" && test -z "${NATIVE_WIN32_FALSE}"; then
   as_fn_error $? "conditional \"NATIVE_WIN32\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_GLADEUI_TRUE}" && test -z "${HAVE_GLADEUI_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_GLADEUI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

@@ -30,5 +30,10 @@ libgtk3_opengl_la_SOURCES = \
 gtkgldir = $(includedir)/gtkgl
 gtkgl_HEADERS = canvas.h attributes.h
 
+if HAVE_GLADEUI
+gladedir = $(GLADEUI_CATDIR)
+glade_DATA = gtkgl-catalog.xml
+endif
+
 libgtk3_opengl_la_CPPFLAGS = @GTK_CFLAGS@
 libgtk3_opengl_la_LIBADD = @GTK_LIBS@

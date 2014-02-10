@@ -30,6 +30,7 @@
 # along with libgtk3-opengl.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -132,7 +133,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(gtkgldir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(gladedir)" \
+	"$(DESTDIR)$(gtkgldir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libgtk3_opengl_la_DEPENDENCIES =
 am__libgtk3_opengl_la_SOURCES_DIST = canvas.c xgl.c wgl.c
@@ -186,6 +188,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+DATA = $(glade_DATA)
 HEADERS = $(gtkgl_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -233,6 +236,11 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GLADEUI_CATDIR = @GLADEUI_CATDIR@
+GLADEUI_CFLAGS = @GLADEUI_CFLAGS@
+GLADEUI_LIBS = @GLADEUI_LIBS@
+GL_CFLAGS = @GL_CFLAGS@
+GL_LIBS = @GL_LIBS@
 GREP = @GREP@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -275,6 +283,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+X11_CFLAGS = @X11_CFLAGS@
+X11_LIBS = @X11_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -338,6 +348,8 @@ libgtk3_opengl_la_SOURCES = \
 
 gtkgldir = $(includedir)/gtkgl
 gtkgl_HEADERS = canvas.h attributes.h
+@HAVE_GLADEUI_TRUE@gladedir = $(GLADEUI_CATDIR)
+@HAVE_GLADEUI_TRUE@glade_DATA = gtkgl-catalog.xml
 libgtk3_opengl_la_CPPFLAGS = @GTK_CFLAGS@
 libgtk3_opengl_la_LIBADD = @GTK_LIBS@
 all: all-am
@@ -470,6 +482,27 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-gladeDATA: $(glade_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(glade_DATA)'; test -n "$(gladedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(gladedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(gladedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(gladedir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(gladedir)" || exit $$?; \
+	done
+
+uninstall-gladeDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(glade_DATA)'; test -n "$(gladedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(gladedir)'; $(am__uninstall_files_from_dir)
 install-gtkglHEADERS: $(gtkgl_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(gtkgl_HEADERS)'; test -n "$(gtkgldir)" || list=; \
@@ -576,9 +609,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(gtkgldir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(gladedir)" "$(DESTDIR)$(gtkgldir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -634,7 +667,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-gtkglHEADERS
+install-data-am: install-gladeDATA install-gtkglHEADERS
 
 install-dvi: install-dvi-am
 
@@ -680,7 +713,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-gtkglHEADERS uninstall-libLTLIBRARIES
+uninstall-am: uninstall-gladeDATA uninstall-gtkglHEADERS \
+	uninstall-libLTLIBRARIES
 
 .MAKE: install-am install-strip
 
@@ -690,15 +724,15 @@ uninstall-am: uninstall-gtkglHEADERS uninstall-libLTLIBRARIES
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-gtkglHEADERS install-html \
-	install-html-am install-info install-info-am \
+	install-exec-am install-gladeDATA install-gtkglHEADERS \
+	install-html install-html-am install-info install-info-am \
 	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-gtkglHEADERS \
-	uninstall-libLTLIBRARIES
+	tags tags-am uninstall uninstall-am uninstall-gladeDATA \
+	uninstall-gtkglHEADERS uninstall-libLTLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -84,20 +84,20 @@ gtk_gl_canvas_native_new()
 
 
 void 
-gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv, const GtkGLAttributes *attrs)
 {
 	GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
-    int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, priv->attrs.depth_buffer_bits, 
-		GLX_SAMPLES, (int) priv->attrs.num_samples,
+    int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 
+		GLX_SAMPLES, (int) attrs->num_samples,
 		None, None, None, None };
 	int *att_ptr = att+5;
 
-	if (priv->attrs.flags & GTK_GL_DOUBLE_BUFFERED)
+	if (attrs->flags & GTK_GL_DOUBLE_BUFFERED)
 		*att_ptr++ = GLX_DOUBLEBUFFER;
-	if (priv->attrs.flags & GTK_GL_STEREO)
+	if (attrs->flags & GTK_GL_STEREO)
 		*att_ptr++ = GLX_STEREO;
-	if (priv->attrs.flags & GTK_GL_SAMPLE_BUFFERS) 
+	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) 
 		*att_ptr++ = GLX_SAMPLE_BUFFERS;
 	
     native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
