@@ -19,8 +19,10 @@ lib_LTLIBRARIES =  \
 
 if PLATFORM_WIN32
 platform_sources = wgl.c
+platform_def = -DPLATFORM_WIN32
 else
 platform_sources = xgl.c
+platform_def = -DPLATFORM_X11
 endif
 
 libgtk3_opengl_la_SOURCES = \
@@ -35,5 +37,5 @@ gladedir = $(GLADEUI_CATDIR)
 glade_DATA = gtkgl-catalog.xml
 endif
 
-libgtk3_opengl_la_CPPFLAGS = @GTK_CFLAGS@
+libgtk3_opengl_la_CFLAGS = @GTK_CFLAGS@ $(platform_def)
 libgtk3_opengl_la_LIBADD = @GTK_LIBS@

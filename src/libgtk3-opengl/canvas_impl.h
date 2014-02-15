@@ -37,7 +37,7 @@ struct _GtkGLCanvas_Priv {
 
 
 GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
-void gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv, const GtkGLAttributes *attrs);
+void gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
 void gtk_gl_canvas_native_attach_context(GtkGLCanvas_Priv *priv);
 void gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv);
 void gtk_gl_canvas_native_swap_buffers(GtkGLCanvas_Priv *priv);

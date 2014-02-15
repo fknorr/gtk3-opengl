@@ -51,7 +51,6 @@
 #include "canvas_impl.h"
 
 #include <gtk/gtk.h>
-#include <gdk/gdkx.h>
 #include <glib-object.h>
 #include <stdlib.h>
 
@@ -108,6 +107,7 @@ gtk_gl_canvas_create_window(GtkWidget *wid, const GtkGLAttributes *attrs);
 void
 gtk_gl_canvas_realize(GtkWidget *wid)
 {
+	printf("-- begin realize\n");
     GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
     priv->disp = gdk_display_get_default();
@@ -133,9 +133,14 @@ gtk_gl_canvas_realize(GtkWidget *wid)
     attributes.wclass = GDK_INPUT_OUTPUT;
     attributes.visual = gdk_visual_get_best_with_both(priv->effective_depth,
         GDK_VISUAL_DIRECT_COLOR);
-    attributes.event_mask = gtk_widget_get_events(wid);
-    attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
 
+	if (!attributes.visual)
+		attributes.visual = gdk_visual_get_system ();
+	
+	printf("visual: %lu\n", attributes.visual);
+	attributes.event_mask = gtk_widget_get_events(wid);
+    attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+    printf("-- window-new\n");
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, attributes_mask);
     gdk_window_set_user_data(priv->win, wid);
@@ -144,6 +149,7 @@ gtk_gl_canvas_realize(GtkWidget *wid)
     g_object_ref(wid);
 	
     gtk_gl_canvas_send_configure(wid);
+	printf("-- end realize\n");
 }
 
 
@@ -229,7 +235,7 @@ gtk_gl_canvas_new(void)
 void gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	gtk_gl_canvas_native_create_context(priv, attrs);
+	gtk_gl_canvas_native_create_context(canvas, attrs);
 	gtk_gl_canvas_native_attach_context(priv);
 
 	priv->is_dummy = FALSE;

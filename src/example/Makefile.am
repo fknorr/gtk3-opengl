@@ -20,7 +20,7 @@ example_SOURCES = \
 	main.c
 
 example_LDADD = \
-	-lgtk3-opengl -lm -lGL \
+	../libgtk3-opengl/libgtk3-opengl.la -lm -lGL \
 	@GTK_LIBS@
 
 example_CPPFLAGS = \

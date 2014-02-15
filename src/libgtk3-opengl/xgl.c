@@ -84,8 +84,9 @@ gtk_gl_canvas_native_new()
 
 
 void 
-gtk_gl_canvas_native_create_context(GtkGLCanvas_Priv *priv, const GtkGLAttributes *attrs)
+gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
     int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 

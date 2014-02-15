@@ -29,8 +29,6 @@ AM_SILENT_RULES([yes])
 AC_PROG_CC
 
 PKG_CHECK_MODULES([GTK], [gtk+-3.0])
-PKG_CHECK_MODULES([GL], [gl])
-PKG_CHECK_MODULES([X11], [x11])
 
 PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0], 
 	[have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`],
@@ -57,7 +55,13 @@ case $host_os in
     ;;
 esac
 
+if test x"$platform_win32" = "xno"; then
+PKG_CHECK_MODULES([GL], [gl])
+PKG_CHECK_MODULES([X11], [x11])
+fi
+
 AM_CONDITIONAL(PLATFORM_WIN32, test x"$platform_win32" = "xyes")
+
 AM_CONDITIONAL(NATIVE_WIN32, test x"$native_win32" = "xyes")
 AM_CONDITIONAL(HAVE_GLADEUI, test x"$have_glade" = "xyes")
 

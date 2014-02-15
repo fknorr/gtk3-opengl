@@ -173,9 +173,9 @@ int main(int argc, char *argv[]) {
     // set a callback that will stop the timer from drawing
     g_signal_connect(G_OBJECT(gl), "destroy", G_CALLBACK(destroy_the_gl), 0);
 
-    gtk_widget_add_events(gl,  GDK_ALL_EVENTS_MASK);
+    //gtk_widget_add_events(gl,  GDK_ALL_EVENTS_MASK);
     g_signal_connect(G_OBJECT(gl), "button-press-event", G_CALLBACK(on_clicked), 0);
-/*
+
     // our layout
     cnt = gtk_grid_new();
 
@@ -202,8 +202,9 @@ int main(int argc, char *argv[]) {
 
     // bureaucracy and show things on screen
     gtk_grid_attach(GTK_GRID(cnt), gl, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(cnt), bt1, 1, 1, 1, 1);*/
-    gtk_container_add(GTK_CONTAINER(win), gl);
+    gtk_grid_attach(GTK_GRID(cnt), bt1, 1, 1, 1, 1);
+	
+    gtk_container_add(GTK_CONTAINER(win), cnt);
     gtk_widget_set_size_request(gl, 200, 200);
     gtk_widget_show_all(win);
 
