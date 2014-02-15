@@ -32,6 +32,7 @@ typedef struct _GtkGLAttributes GtkGLAttributes;
 struct _GtkGLAttributes {
 	unsigned flags;
 	unsigned num_samples;
+	unsigned color_buffer_bits;
 	unsigned depth_buffer_bits;
 	unsigned stencil_buffer_bits;
 };

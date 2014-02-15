@@ -120,16 +120,19 @@ click_the_button(GtkWidget *bt, gpointer ud) {
     GtkWidget *grid, *gl;
     int n;
     grid = *(GtkWidget**)ud;
+	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
+		8, 24 };
 
     for (n = 0; n < 500; ++n) {
         gl = gtk_grid_get_child_at(GTK_GRID(grid), 0, 1);
 
         // do_the_gl = FALSE;
-        // g_object_unref(G_OBJECT(gl));
         do_the_gl = 0;
         gtk_container_remove(GTK_CONTAINER(grid), gl);
+        g_object_unref(G_OBJECT(gl));
 
         gl = gtk_gl_canvas_new();
+	gtk_gl_canvas_create_context(GTK_GL_CANVAS(gl), &attrs); 
         gtk_widget_set_size_request(gl, 200, 200);
         gtk_grid_attach(GTK_GRID(grid), gl, 0, 1, 1, 1);
 

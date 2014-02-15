@@ -153,7 +153,10 @@ gtk_gl_canvas_unrealize(GtkWidget *wid)
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
 
 	if (!priv->is_dummy)
+	{
 		gtk_gl_canvas_native_destroy_context(gtkgl);
+		priv->is_dummy = TRUE;
+	}
 
     GTK_WIDGET_CLASS(gtk_gl_canvas_parent_class)->unrealize(wid);
 }
@@ -228,8 +231,11 @@ gtk_gl_canvas_new(void)
 void gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	gtk_gl_canvas_native_create_context(canvas, attrs);
 
+	if (!priv->is_dummy)
+		gtk_gl_canvas_native_destroy_context(canvas);
+	
+	gtk_gl_canvas_native_create_context(canvas, attrs);
 	priv->is_dummy = FALSE;
 }
 

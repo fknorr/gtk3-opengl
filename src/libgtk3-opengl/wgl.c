@@ -25,6 +25,7 @@
 #include <gdk/gdkwin32.h>
 #include <glib-object.h>
 #include <GL/gl.h>
+#include <GL/wglext.h>
 
 
 struct _GtkGLCanvas_NativePriv 
@@ -44,40 +45,55 @@ gtk_gl_canvas_native_new()
 }
 
 
+static void
+choose_pixel_format_arb(HDC dc, const GtkGLAttributes *attrs, wgl_pixel_format_chooser_t choose)
+{
+	GLint iattribs[] = {
+		WGL_DOUBLE_BUFFER_ARB, ((attrs->flags & GTK_GL_DOUBLE_BUFFERED) ? GL_TRUE : GL_FALSE),
+		WGL_STEREO_ARB, ((attrs->flags & GTK_GL_STEREO) ? GL_TRUE : GL_FALSE),
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, attrs->color_buffer_bits,
+		WGL_DEPTH_BITS_ARB, attrs->depth_buffer_bits,
+		WGL_STENCIL_BITS_ARB, attrs->stencil_buffer_bits,
+		WGL_SAMPLE_BUFFERS_ARB, ((attrs->flags & GTK_GL_SAMPLE_BUFFERS) ? GL_TRUE : GL_FALSE),
+ 		WGL_SAMPLES_ARB, attrs->num_samples,
+		0
+	};
+	
+	GLfloat fattribs[] = {0};
+
+	choose(dc, iattribs, fattribs, 1, &format, &n_formats);
+	SetPixelFormat(dc, format, NULL);
+}
+
+
+static void
+choose_pixel_format_legacy(HDC dc, const GtkGLAttributes *attrs)
+{
+	
+}
+
+
 void 
 gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-
-	PIXELFORMATDESCRIPTOR pfd =
-    {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
-        PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
-        32,                        //Colordepth of the framebuffer.
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0,
-        24,                        //Number of bits for the depthbuffer
-        8,                        //Number of bits for the stencilbuffer
-        0,                        //Number of Aux buffers in the framebuffer.
-        PFD_MAIN_PLANE,
-        0,
-        0, 0, 0
-    };
 	HWND hwnd;
 	HDC dc;
-	int pf;
+	GLuint n_formats;
+	GLint format;
 	
     hwnd = GDK_WINDOW_HWND(gtk_widget_get_window(GTK_WIDGET(canvas)));
 	dc = GetDC(hwnd);
 	native->dc = dc;
-	pf = ChoosePixelFormat(dc, &pfd);
-	SetPixelFormat(dc, pf, &pfd);
+
+	wglChoosePixelFormatARB(dc, iattribs, fattribs, 1, &format, &n_formats);
+	SetPixelFormat(dc, format, NULL);
+	
 	native->gl = wglCreateContext(dc);
 	wglMakeCurrent(dc, native->gl);
 }
