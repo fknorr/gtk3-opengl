@@ -137,8 +137,8 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(gladedir)" \
 	"$(DESTDIR)$(gtkgldir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libgtk3_opengl_la_DEPENDENCIES =
-am__libgtk3_opengl_la_SOURCES_DIST = canvas.c xgl.c wgl.c
-@PLATFORM_WIN32_FALSE@am__objects_1 = libgtk3_opengl_la-xgl.lo
+am__libgtk3_opengl_la_SOURCES_DIST = canvas.c glx.c wgl.c
+@PLATFORM_WIN32_FALSE@am__objects_1 = libgtk3_opengl_la-glx.lo
 @PLATFORM_WIN32_TRUE@am__objects_1 = libgtk3_opengl_la-wgl.lo
 am_libgtk3_opengl_la_OBJECTS = libgtk3_opengl_la-canvas.lo \
 	$(am__objects_1)
@@ -344,7 +344,7 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = \
 	libgtk3-opengl.la
 
-@PLATFORM_WIN32_FALSE@platform_sources = xgl.c
+@PLATFORM_WIN32_FALSE@platform_sources = glx.c
 @PLATFORM_WIN32_TRUE@platform_sources = wgl.c
 @PLATFORM_WIN32_FALSE@platform_def = -DPLATFORM_X11
 @PLATFORM_WIN32_TRUE@platform_def = -DPLATFORM_WIN32
@@ -438,8 +438,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk3_opengl_la-canvas.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk3_opengl_la-glx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk3_opengl_la-wgl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk3_opengl_la-xgl.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -469,12 +469,12 @@ libgtk3_opengl_la-canvas.lo: canvas.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -c -o libgtk3_opengl_la-canvas.lo `test -f 'canvas.c' || echo '$(srcdir)/'`canvas.c
 
-libgtk3_opengl_la-xgl.lo: xgl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -MT libgtk3_opengl_la-xgl.lo -MD -MP -MF $(DEPDIR)/libgtk3_opengl_la-xgl.Tpo -c -o libgtk3_opengl_la-xgl.lo `test -f 'xgl.c' || echo '$(srcdir)/'`xgl.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk3_opengl_la-xgl.Tpo $(DEPDIR)/libgtk3_opengl_la-xgl.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='xgl.c' object='libgtk3_opengl_la-xgl.lo' libtool=yes @AMDEPBACKSLASH@
+libgtk3_opengl_la-glx.lo: glx.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -MT libgtk3_opengl_la-glx.lo -MD -MP -MF $(DEPDIR)/libgtk3_opengl_la-glx.Tpo -c -o libgtk3_opengl_la-glx.lo `test -f 'glx.c' || echo '$(srcdir)/'`glx.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk3_opengl_la-glx.Tpo $(DEPDIR)/libgtk3_opengl_la-glx.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='glx.c' object='libgtk3_opengl_la-glx.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -c -o libgtk3_opengl_la-xgl.lo `test -f 'xgl.c' || echo '$(srcdir)/'`xgl.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -c -o libgtk3_opengl_la-glx.lo `test -f 'glx.c' || echo '$(srcdir)/'`glx.c
 
 libgtk3_opengl_la-wgl.lo: wgl.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk3_opengl_la_CFLAGS) $(CFLAGS) -MT libgtk3_opengl_la-wgl.lo -MD -MP -MF $(DEPDIR)/libgtk3_opengl_la-wgl.Tpo -c -o libgtk3_opengl_la-wgl.lo `test -f 'wgl.c' || echo '$(srcdir)/'`wgl.c

@@ -21,7 +21,7 @@ if PLATFORM_WIN32
 platform_sources = wgl.c
 platform_def = -DPLATFORM_WIN32
 else
-platform_sources = xgl.c
+platform_sources = glx.c
 platform_def = -DPLATFORM_X11
 endif
 

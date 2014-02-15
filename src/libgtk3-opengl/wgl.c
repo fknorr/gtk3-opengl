@@ -38,7 +38,8 @@ GtkGLCanvas_NativePriv*
 gtk_gl_canvas_native_new()
 {
 	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
-    native->gl = native->dc = NULL;
+    native->gl = NULL;
+	native->dc = NULL;
 	return native;
 }
 
@@ -82,23 +83,19 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 }
 
 
-
 void 
-gtk_gl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas)
 {
-	GtkGLCanvas_NativePriv *native = priv->native;
-}
-
-
-void 
-gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
-{
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 	
     if (native->dc && native->gl) {
+		HWND hwnd = GDK_WINDOW_HWND(gtk_widget_get_window(GTK_WIDGET(canvas)));
 		wglMakeCurrent(native->dc, NULL);
 		wglDeleteContext(native->gl);
-		native->gl = native->dc = NULL;
+		ReleaseDC(hwnd, native->dc);
+		native->gl = NULL;
+		native->dc = NULL;
     }
 }
 

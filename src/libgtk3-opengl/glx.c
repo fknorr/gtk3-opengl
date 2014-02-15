@@ -109,22 +109,16 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 
 
 void 
-gtk_gl_canvas_native_attach_context(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas)
 {
-	GtkGLCanvas_NativePriv *native = priv->native;
-    native->xwin = gdk_x11_window_get_xid(priv->win);
-}
-
-
-void 
-gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
-{
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 	
     if (native->xdis) {
-        glXDestroyContext(native->xdis, native->glc);
-        // g_clear_object((volatile GObject**)&priv->win);
-
+		
+		glXDestroyContext(native->xdis, native->glc);
+		native->glc = NULL;
+		native->xwin = NULL;
         native->xdis = NULL;
     }
 }
