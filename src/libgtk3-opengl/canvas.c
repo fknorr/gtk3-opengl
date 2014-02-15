@@ -248,7 +248,7 @@ gtk_gl_canvas_make_current(GtkGLCanvas *wid)
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 		
 	if (!priv->is_dummy)
-		gtk_gl_canvas_native_make_current(priv);
+		gtk_gl_canvas_native_make_current(wid);
 }
 
 
@@ -258,6 +258,6 @@ gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 
 	if (!priv->is_dummy)
-		gtk_gl_canvas_native_swap_buffers(priv);
+		gtk_gl_canvas_native_swap_buffers(wid);
 }
 

@@ -131,16 +131,18 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
 
 
 void
-gtk_gl_canvas_native_make_current(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas)
 {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     glXMakeCurrent(native->xdis, native->xwin, native->glc);
 }
 
 
 void
-gtk_gl_canvas_native_swap_buffers(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
 {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     glXSwapBuffers(native->xdis, native->xwin);
 }

@@ -24,6 +24,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkwin32.h>
 #include <glib-object.h>
+#include <GL/gl.h>
 
 
 struct _GtkGLCanvas_NativePriv 
@@ -77,9 +78,9 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 	pf = ChoosePixelFormat(dc, &pfd);
 	SetPixelFormat(dc, pf, &pfd);
 	native->gl = wglCreateContext(dc);
-	printf("hwnd=%lu\ndc=%lu\npf=%lu\ngl=%lu\n", hwnd, dc, pf, native->gl);
-	
+	wglMakeCurrent(dc, native->gl);
 }
+
 
 
 void 
@@ -103,17 +104,21 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas_Priv *priv)
 
 
 void
-gtk_gl_canvas_native_make_current(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas)
 {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+
     GtkGLCanvas_NativePriv *native = priv->native;
     wglMakeCurrent(native->dc, native->gl);
 }
 
 
 void
-gtk_gl_canvas_native_swap_buffers(GtkGLCanvas_Priv *priv)
+gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
 {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+
     GtkGLCanvas_NativePriv *native = priv->native;
-    wglSwapBuffers(native->gl);
+    wglSwapLayerBuffers(native->dc, WGL_SWAP_MAIN_PLANE);
 }
 
