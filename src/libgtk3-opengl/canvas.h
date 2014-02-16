@@ -74,7 +74,8 @@ struct _GtkGLCanvasClass {
 
 GType gtk_gl_canvas_get_type(void);
 GtkWidget *gtk_gl_canvas_new(void);
-void gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
+gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
+const char *gtk_gl_canvas_get_error(GtkGLCanvas *canvas);
 
 void gtk_gl_canvas_make_current(GtkGLCanvas*);
 void gtk_gl_canvas_swap_buffers(GtkGLCanvas*);

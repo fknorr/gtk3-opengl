@@ -33,11 +33,13 @@ struct _GtkGLCanvas_Priv {
 	GtkGLCanvas_NativePriv *native;
 	gboolean is_dummy;
 	unsigned effective_depth;
+	gboolean error;
+	char *error_msg;
 };
 
 
 GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
-void gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
+gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
 void gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas);
 void gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas);
 void gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas);

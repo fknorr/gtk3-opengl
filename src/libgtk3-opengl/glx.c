@@ -79,13 +79,13 @@ gtk_gl_canvas_native_new()
 {
 	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
 	native->glc = NULL;
-	native->xwin = NULL;
+	native->xwin = 0;
     native->xdis = NULL;
 	return native;
 }
 
 
-void 
+gboolean
 gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
@@ -102,12 +102,37 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 		*att_ptr++ = GLX_STEREO;
 	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) 
 		*att_ptr++ = GLX_SAMPLE_BUFFERS;
-
-	native->xwin = gdk_x11_window_get_xid(priv->win);
+	
+    native->xwin = gdk_x11_window_get_xid(priv->win);
+	if (!native->xwin) 
+	{
+		priv->error_msg = strdup("Unable to get X11 window for canvas");
+		return FALSE;
+	}	
+	
     native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
+	if (!native->xdis) 
+	{
+		priv->error_msg = strdup("Unable to get X display");
+		return FALSE;
+	}	
+	
     vi = glXChooseVisual(native->xdis, 0, att);
+	if (!vi) 
+	{
+		priv->error_msg = strdup("Unable to get X visual for the specified attributes");
+		return FALSE;
+	}	
+	
     native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);	
+	if (!native->glc) 
+	{
+		priv->error_msg = strdup("Unable to create GLX context");
+		return FALSE;
+	}	
+	
 	priv->effective_depth = vi->depth;
+	return TRUE;
 }
 
 
@@ -120,7 +145,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas)
     if (native->xdis) {		
 		glXDestroyContext(native->xdis, native->glc);
 		native->glc = NULL;
-		native->xwin = NULL;
+		native->xwin = 0;
         native->xdis = NULL;
     }
 }

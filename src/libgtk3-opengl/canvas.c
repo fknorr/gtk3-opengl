@@ -77,6 +77,7 @@ gtk_gl_canvas_finalize(GObject *obj)
 	GtkGLCanvas *canvas = GTK_GL_CANVAS(obj);
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	free(priv->native);
+	free(priv->error_msg);
 	
     G_OBJECT_CLASS(gtk_gl_canvas_parent_class)->finalize(obj);
 }
@@ -170,6 +171,8 @@ gtk_gl_canvas_init(GtkGLCanvas *self)
 	
 	priv->native = gtk_gl_canvas_native_new();
 	priv->is_dummy = TRUE;
+	priv->error = FALSE;
+	priv->error_msg = NULL;
 
     gtk_widget_set_can_focus(wid, TRUE);
     gtk_widget_set_receives_default(wid, TRUE);
@@ -228,15 +231,19 @@ gtk_gl_canvas_new(void)
 }
 
 
-void gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
+gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	gboolean success;
 
+	priv->error = FALSE;
+	priv->error_msg = NULL;
 	if (!priv->is_dummy)
 		gtk_gl_canvas_native_destroy_context(canvas);
 	
-	gtk_gl_canvas_native_create_context(canvas, attrs);
-	priv->is_dummy = FALSE;
+	success = gtk_gl_canvas_native_create_context(canvas, attrs);
+	priv->is_dummy = priv->error = !success;
+	return success;
 }
 
 
@@ -244,18 +251,24 @@ void
 gtk_gl_canvas_make_current(GtkGLCanvas *wid)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
-		
-	if (!priv->is_dummy)
-		gtk_gl_canvas_native_make_current(wid);
+	g_assert(!priv->is_dummy && !priv->error);
+	gtk_gl_canvas_native_make_current(wid);
 }
 
+
+const char* 
+gtk_gl_canvas_get_error (GtkGLCanvas *canvas)
+{
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	return priv->error_msg;
+}
+	
 
 void
 gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
-
-	if (!priv->is_dummy)
-		gtk_gl_canvas_native_swap_buffers(wid);
+	g_assert(!priv->is_dummy && !priv->error);
+	gtk_gl_canvas_native_swap_buffers(wid);
 }
 

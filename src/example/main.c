@@ -151,7 +151,10 @@ static void on_canvas_realize(void)
 {
 	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
 		8, 24 };
-	gtk_gl_canvas_create_context(GTK_GL_CANVAS(g_gl_wid), &attrs); 
+	if (!gtk_gl_canvas_create_context(GTK_GL_CANVAS(g_gl_wid), &attrs))
+	{
+		fprintf(stderr, "%s\n", gtk_gl_canvas_get_error(GTK_GL_CANVAS(g_gl_wid)));
+	}
 }
 
 int main(int argc, char *argv[]) {
