@@ -231,7 +231,8 @@ gtk_gl_canvas_new(void)
 }
 
 
-gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
+gboolean 
+gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	gboolean success;
@@ -244,6 +245,23 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes
 	success = gtk_gl_canvas_native_create_context(canvas, attrs);
 	priv->is_dummy = priv->error = !success;
 	return success;
+}
+
+
+void 
+gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas)
+{
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	g_assert(!priv->is_dummy && !priv->error);
+	gtk_gl_canvas_native_destroy_context(canvas);
+}
+
+
+gboolean
+gtk_gl_canvas_has_context(GtkGLCanvas *canvas)
+{
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	return !priv->is_dummy;
 }
 
 
