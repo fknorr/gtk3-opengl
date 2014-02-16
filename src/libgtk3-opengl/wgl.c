@@ -49,7 +49,7 @@ char *format_last_error(void)
 {
 	char *ptr;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
-	              GetLastError(), 0, &ptr, 0, NULL);
+	              GetLastError(), 0, (LPSTR) &ptr, 0, NULL);
 	return ptr;
 }
 
@@ -100,8 +100,8 @@ choose_pixel_format_legacy(HDC dc, const GtkGLAttributes *attrs)
         0,
         0,
         0, 0, 0, 0,
-        attrs->depth_buffer_bits
-        attrs->stencil_buffer_bits
+        attrs->depth_buffer_bits,
+        attrs->stencil_buffer_bits,
         0,
         PFD_MAIN_PLANE,
         0,
