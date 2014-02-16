@@ -55,37 +55,81 @@
 #include <GL/gl.h>
 #include <math.h>
 
-static gboolean do_the_gl = TRUE;
-static GtkWidget *g_gl_wid = 0;
+static gboolean running = TRUE;
+static GtkWidget *window;
+static GtkGLCanvas *canvas;
 
-static
-void destroy_the_gl(GtkWidget *wid, gpointer ud) {
-    do_the_gl = FALSE;
+
+static void 
+message_box_response(GtkDialog *dialog)
+{
+	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
-static
-gboolean on_clicked(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
-    printf("clicked at %.3fx%.3f with button %d\n",
+
+static void 
+message_box(int type, const char *msg)
+{
+	GtkWidget *dlg = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_MODAL, 
+	                                        type, GTK_BUTTONS_OK, "%s", msg);
+	g_signal_connect(G_OBJECT(dlg), "response", G_CALLBACK(message_box_response), NULL);
+	gtk_dialog_run(GTK_DIALOG(dlg));
+}
+
+
+gboolean
+example_start_animation(void)
+{
+	if (!gtk_gl_canvas_has_context(canvas))
+		message_box(GTK_MESSAGE_ERROR, "No context present");
+	else
+		running = TRUE;
+	return TRUE;
+}
+
+
+gboolean 
+example_stop_animation(void) {
+    running = FALSE;
+	return TRUE;
+}
+
+
+gboolean 
+example_click(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
+    char *msg;
+	asprintf(&msg, "Clicked at %.3fx%.3f with button %d\n",
         ev->button.x, ev->button.y, ev->button.button);
+	message_box(GTK_MESSAGE_INFO, msg);
     return TRUE;
 }
 
-static
-gboolean draw_the_gl(gpointer ud) {
-    static float s = 0.f;
-    GtkWidget *gl = g_gl_wid;
-    GdkWindow *wnd;
+static float s = 0.f;
 
-    if (!do_the_gl)
-        return FALSE;
+static gboolean 
+example_animate(gpointer ud) 
+{
+    if (running)
+	{
+		// some triangle rotation stuff
+		s += 0.03f;
 
-    // this is very important, as OpenGL has a somewhat global state. 
-    // this will set the OpenGL state to this very widget.
-    gtk_gl_canvas_make_current(GTK_GL_CANVAS(gl));
+		gtk_widget_queue_draw(GTK_WIDGET(canvas));
+	}
+	return TRUE;
+}
 
-    // some triangle rotation stuff
-    s += 0.03f;
 
+gboolean
+example_draw_gl(void)
+{
+	if (!gtk_gl_canvas_has_context(canvas))
+		return FALSE;
+	
+	// this is very important, as OpenGL has a somewhat global state. 
+	// this will set the OpenGL state to this very widget.
+	gtk_gl_canvas_make_current(canvas);
+	
     // more bureaucracy
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -111,110 +155,67 @@ gboolean draw_the_gl(gpointer ud) {
     glEnd();
 
     // this is also very important
-    gtk_gl_canvas_swap_buffers(GTK_GL_CANVAS(gl));
+    gtk_gl_canvas_swap_buffers(canvas);
     return TRUE;
 }
 
-static void
-click_the_button(GtkWidget *bt, gpointer ud) {
-    GtkWidget *grid, *gl;
-    int n;
-    grid = *(GtkWidget**)ud;
-	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
-		8, 24 };
 
-    for (n = 0; n < 500; ++n) {
-        gl = gtk_grid_get_child_at(GTK_GRID(grid), 0, 1);
-
-        // do_the_gl = FALSE;
-        do_the_gl = 0;
-        gtk_container_remove(GTK_CONTAINER(grid), gl);
-        g_object_unref(G_OBJECT(gl));
-
-        gl = gtk_gl_canvas_new();
-	gtk_gl_canvas_create_context(GTK_GL_CANVAS(gl), &attrs); 
-        gtk_widget_set_size_request(gl, 200, 200);
-        gtk_grid_attach(GTK_GRID(grid), gl, 0, 1, 1, 1);
-
-        g_gl_wid = gl;
-        do_the_gl = 1;
-
-        gtk_widget_show_all(grid);
-        gdk_window_process_all_updates();
-    }
-
-    // gl = te_gtk_gl_new();
-    // gl = gtk_grid_get_child_at(GTK_GRID(grid), 0, 1);
-}
-
-static void on_canvas_realize(void)
+gboolean
+example_create_context(void)
 {
 	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
 		8, 24 };
-	if (!gtk_gl_canvas_create_context(GTK_GL_CANVAS(g_gl_wid), &attrs))
-	{
-		fprintf(stderr, "%s\n", gtk_gl_canvas_get_error(GTK_GL_CANVAS(g_gl_wid)));
-	}
+
+	if (gtk_gl_canvas_has_context(canvas))
+		message_box(GTK_MESSAGE_ERROR, "Context exists already");
+	else if (!gtk_gl_canvas_create_context(canvas, &attrs))
+		message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
+	return TRUE;
 }
 
-int main(int argc, char *argv[]) {
 
-    GtkWidget *win, *cnt, *gl, *bt1;
-    int i;
+gboolean 
+example_destroy_context(void)
+{
+	if (!gtk_gl_canvas_has_context(canvas))
+		message_box(GTK_MESSAGE_ERROR, "No context present");
+	else
+	{
+		running = FALSE;
+		gtk_gl_canvas_destroy_context(canvas);
+	}
+	return TRUE;
+}
 
-    // initialize GTK+
+
+gboolean
+example_check_context(void)
+{
+	const char *msg = gtk_gl_canvas_has_context(canvas) 
+		? "I have a context" : "I don't have a context";
+	message_box(GTK_MESSAGE_INFO, msg);
+}
+
+
+int 
+main(int argc, char *argv[]) {
+
+	GtkBuilder *builder;
+
     gtk_init(&argc, &argv);
 
-    // create the window and set it to quit application when closed
-    win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_signal_connect(G_OBJECT(win), "destroy", G_CALLBACK(gtk_main_quit), 0);
-
-    // create the OpenGL widget
-    g_gl_wid = gl = gtk_gl_canvas_new();
-	g_signal_connect(G_OBJECT(gl), "realize", G_CALLBACK(on_canvas_realize), NULL);
-
-    bt1 = gtk_button_new_with_label("one");
-    g_signal_connect(G_OBJECT(bt1), "clicked", G_CALLBACK(click_the_button), (gpointer)&cnt);
-
-    // set a callback that will stop the timer from drawing
-    g_signal_connect(G_OBJECT(gl), "destroy", G_CALLBACK(destroy_the_gl), 0);
-
-    //gtk_widget_add_events(gl,  GDK_ALL_EVENTS_MASK);
-    g_signal_connect(G_OBJECT(gl), "button-press-event", G_CALLBACK(on_clicked), 0);
-
-    // our layout
-    cnt = gtk_grid_new();
-
-    // create menu
-    {
-        int i;
-        GtkWidget *mb, *main, *subm;
-        mb = gtk_menu_bar_new();
-        main = gtk_menu_item_new_with_label("File");
-
-        gtk_container_add(GTK_CONTAINER(mb), main);
-        gtk_grid_attach(GTK_GRID(cnt), mb, 0, 0, 2, 1);
-
-        subm = gtk_menu_new();
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(main), subm);
-        for (i =0; i < 16; ++i) {
-            char n[64];
-            GtkWidget *k;
-            sprintf(n, "Item %02d", i+1);
-            k = gtk_menu_item_new_with_label(n);
-            gtk_container_add(GTK_CONTAINER(subm), k);
-        }
-    }
-
-    // bureaucracy and show things on screen
-    gtk_grid_attach(GTK_GRID(cnt), gl, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(cnt), bt1, 1, 1, 1, 1);
+	builder = gtk_builder_new();
+	gtk_builder_add_from_file(builder, "src/example/example.ui", NULL);
+	gtk_builder_connect_signals (builder, NULL);
 	
-    gtk_container_add(GTK_CONTAINER(win), cnt);
-    gtk_widget_set_size_request(gl, 200, 200);
-    gtk_widget_show_all(win);
+	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
+	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
 
-    g_timeout_add_full(1000, 10, draw_the_gl, 0, 0);
+	gtk_widget_show_all(window);
+	g_object_unref(builder);
+
+	running = FALSE;
+    g_timeout_add_full(1000, 10, example_animate, 0, 0);
 
     gtk_main();
     return 0;

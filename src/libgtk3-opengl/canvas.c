@@ -63,12 +63,22 @@ static void gtk_gl_canvas_send_configure(GtkWidget *wid);
 static void gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation);
 static gboolean gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr);
 
+
 static gboolean
 gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr)
 {
-    return FALSE;
+	if (gtk_gl_canvas_has_context(GTK_GL_CANVAS(wid)))
+		return FALSE;
+	else 
+	{
+		GtkAllocation alloc;		
+		gtk_widget_get_allocation(wid, &alloc);
+		cairo_set_source_rgb (cr, 0, 0, 0);
+		cairo_rectangle(cr, alloc.x, alloc.y, alloc.width, alloc.height);
+		cairo_fill(cr);
+		return TRUE;
+	}
 }
-
 
 
 static void
@@ -244,6 +254,9 @@ gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
 	
 	success = gtk_gl_canvas_native_create_context(canvas, attrs);
 	priv->is_dummy = priv->error = !success;
+
+	gtk_widget_queue_draw(GTK_WIDGET(canvas));
+	
 	return success;
 }
 
@@ -254,6 +267,16 @@ gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas)
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	g_assert(!priv->is_dummy && !priv->error);
 	gtk_gl_canvas_native_destroy_context(canvas);
+	
+	priv->is_dummy = TRUE;
+	priv->error = FALSE;
+	if (priv->error_msg)
+	{
+		free(priv->error_msg);
+		priv->error_msg = NULL;
+	}
+
+	gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 
 

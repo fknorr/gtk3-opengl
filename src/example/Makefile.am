@@ -25,3 +25,6 @@ example_LDADD = \
 
 example_CPPFLAGS = \
     @GTK_CFLAGS@
+
+example_CFLAGS = \
+	-rdynamic
