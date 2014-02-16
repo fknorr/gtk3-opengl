@@ -26,5 +26,10 @@ example_LDADD = \
 example_CPPFLAGS = \
     @GTK_CFLAGS@
 
+if PLATFORM_WIN32
+example_LDFLAGS = \
+	-Wl,--export-all-symbols
+else
 example_CFLAGS = \
 	-rdynamic
+endif

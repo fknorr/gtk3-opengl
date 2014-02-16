@@ -54,6 +54,8 @@
 #include <gtkgl/canvas.h>
 #include <GL/gl.h>
 #include <math.h>
+#include <gio/gio.h>
+
 
 static gboolean running = TRUE;
 static GtkWidget *window;
@@ -198,15 +200,32 @@ example_check_context(void)
 
 
 int 
-main(int argc, char *argv[]) {
-
+main(int argc, char *argv[]) 
+{
 	GtkBuilder *builder;
+	GError *error = NULL;
+	GFile *exe_file, *path_file;
+	char *directory, *ui_path;
 
+	exe_file = g_file_new_for_path(argv[0]);
+	path_file = g_file_get_parent(exe_file);
+	directory = g_file_get_path(path_file);
+	ui_path = g_malloc(strlen(directory) + 12);
+	strcpy(ui_path, directory);
+	strcat(ui_path, "/example.ui");
+	g_object_unref(exe_file);
+	g_object_unref(path_file);	
+
+	puts(ui_path);
+	
     gtk_init(&argc, &argv);
-
+	
 	builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, "src/example/example.ui", NULL);
-	gtk_builder_connect_signals (builder, NULL);
+	gtk_builder_add_from_file(builder, ui_path, &error);
+	if (error) g_error(error->message);
+    free(ui_path);
+	
+	gtk_builder_connect_signals(builder, NULL);
 	
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
 	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
