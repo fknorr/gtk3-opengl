@@ -18,7 +18,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Created by Anjuta application wizard.
 
 
-AC_INIT(gtk3_opengl, 0.1)
+AC_INIT(gtkglcanvas, 0.1)
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -69,10 +69,20 @@ AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
 
 LT_INIT([win32-dll])
 
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+canvdocdir=docs/reference/libgtkglcanvas/Makefile
+],[
+AM_CONDITIONAL([ENABLE_GTK_DOC], false)
+canvdocdir=
+])
+AC_CONFIG_MACRO_DIR(m4)
+
 
 AC_OUTPUT([
 Makefile
 src/Makefile
-src/libgtk3-opengl/Makefile
+src/libgtkglcanvas/Makefile
 src/example/Makefile
+docs/reference/libgtkglcanvas/Makefile
 ])

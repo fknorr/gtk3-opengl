@@ -15,7 +15,7 @@
 
 
 lib_LTLIBRARIES =  \
-	libgtk3-opengl.la
+	libgtkglcanvas.la
 
 if PLATFORM_WIN32
 platform_sources = wgl.c
@@ -25,7 +25,7 @@ platform_sources = glx.c
 platform_def = -DPLATFORM_X11
 endif
 
-libgtk3_opengl_la_SOURCES = \
+libgtkglcanvas_la_SOURCES = \
 	canvas.c \
 	$(platform_sources)
 
@@ -34,8 +34,9 @@ gtkgl_HEADERS = canvas.h attributes.h
 
 if HAVE_GLADEUI
 gladedir = $(GLADEUI_CATDIR)
-glade_DATA = gtkgl-catalog.xml
+glade_DATA = gtkglcanvas.xml
 endif
 
-libgtk3_opengl_la_CFLAGS = @GTK_CFLAGS@ $(platform_def)
-libgtk3_opengl_la_LIBADD = @GTK_LIBS@
+libgtkglcanvas_la_CFLAGS = @GTK_CFLAGS@ $(platform_def)
+libgtkglcanvas_la_LIBADD = @GTK_LIBS@
+

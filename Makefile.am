@@ -25,6 +25,7 @@ dist_doc_DATA = \
 	INSTALL \
 	NEWS
 
+ACLOCAL_AMFLAGS = -I m4
 
 
 # Remove doc directory on uninstall
@@ -33,6 +34,7 @@ uninstall-local:
 
 
 SUBDIRS = \
-	src/libgtk3-opengl \
+	src/libgtkglcanvas \
 	src/example \
-	src
+    docs/reference/libgtkglcanvas
+
