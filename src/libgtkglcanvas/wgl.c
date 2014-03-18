@@ -118,6 +118,7 @@ w32_init(void)
         wnd_class.style = CS_OWNDC;
 
         if (!RegisterClassEx(&wnd_class)) goto fail;
+        else allocated = TRUE;
 
         dummy = CreateWindowEx(0, //WS_EX_TRANSPARENT,
         "GLCanvas",
