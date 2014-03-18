@@ -91,6 +91,8 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
+
+    // GLX expects a key-value-array for its parameters. 
     int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 
 		GLX_SAMPLES, (int) attrs->num_samples,
 		None, None, None, None };
@@ -169,17 +171,17 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
 }
 
 
-gboolean
-gtk_gl_supports_feature(int feature)
+GtkGLSupport
+gtk_gl_query_feature_support(GtkGLFeature feature)
 {
     switch (feature)
     {
         case GTK_GL_DOUBLE_BUFFERED:
         case GTK_GL_STEREO:
         case GTK_GL_SAMPLE_BUFFERS:
-            return TRUE;
+            return GTK_GL_FULLY_SUPPORTED;
 
         default:
-            return FALSE;
+            return GTK_GL_UNSUPPORTED;
     }
 }

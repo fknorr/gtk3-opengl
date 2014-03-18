@@ -52,7 +52,9 @@
 #include <gtk/gtk.h>
 #include "attributes.h"
 
+
 G_BEGIN_DECLS
+
 
 #define GTK_GL_TYPE_CANVAS (gtk_gl_canvas_get_type())
 #define GTK_GL_CANVAS(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvas))
@@ -61,27 +63,94 @@ G_BEGIN_DECLS
 #define GTK_GL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), GTK_GL_TYPE_CANVAS_CLASS))
 #define GTK_GL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvasClass))
 
+
+/**
+ * The GLCanvas Widget type.
+ */
 typedef struct _GtkGLCanvas GtkGLCanvas;
+
+
+/**
+ * Type information for @ref GtkGLCanvas
+ */
 typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
 
-struct _GtkGLCanvas {
-    GtkWidget parent_instance;
-};
 
-struct _GtkGLCanvasClass {
-    GtkWidgetClass parent_class;
-};
-
+/**
+ * Returns type information for @ref GtkGLCanvas.
+ * @return The type information
+ */
 GType gtk_gl_canvas_get_type(void);
+
+
+/**
+ * Instantiates a new context-less (dummy) @ref GtkGLCanvas.
+ * @return an instance of GtkGLCanvas
+ */
 GtkWidget *gtk_gl_canvas_new(void);
-gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
+
+
+/**
+ * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
+ * current to the calling thread.
+ *
+ * The method finds the closest match of available context types to the
+ * attributes supplied.
+ *
+ * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error returns
+ * the error message.
+ * 
+ * @param canvas The canvas
+ * @param attrs The attributes for the context to be created
+ * @return Whether context creation was successfull
+ */
+gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
+        const GtkGLAttributes *attrs);
+
+
+/**
+ * Destroys an active context on a @ref GtkGLCanvas.
+ *
+ * @param canvas The canvas
+ */
 void gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas);
+
+
+/**
+ * Returns whether a @ref GtkGLCanvas has an active context.
+ * @param canvas The canvas
+ * @return Whether the canvas has an active context. This is always false for
+ *      new canvases
+ */
 gboolean gtk_gl_canvas_has_context(GtkGLCanvas *canvas);
+
+
+/**
+ * Returns the last error encountered by one of the gtk_gl_* functions.
+ * @param canvas The canvas to check for
+ * @return The error message
+ */
 const char *gtk_gl_canvas_get_error(GtkGLCanvas *canvas);
 
-void gtk_gl_canvas_make_current(GtkGLCanvas*);
-void gtk_gl_canvas_swap_buffers(GtkGLCanvas*);
+
+/**
+ * Makes the OpenGL context of a @ref GtkGLCanvas current to the calling thread.
+ *
+ * This means that all subsequent calls to gl* functions will operate on this
+ * canvas' context.
+ *
+ * @param canvas The canvas
+ */
+void gtk_gl_canvas_make_current(GtkGLCanvas* canvas);
+
+
+/**
+ * Swaps the front and back buffer in a GL context created with the
+ * @ref GTK_GL_DOUBLE_BUFFERED flag.
+ * @param canvas The canvas.
+ */
+void gtk_gl_canvas_swap_buffers(GtkGLCanvas* canvas);
+
 
 G_END_DECLS
-
 

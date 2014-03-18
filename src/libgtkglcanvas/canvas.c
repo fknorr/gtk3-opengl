@@ -55,6 +55,15 @@
 #include <stdlib.h>
 
 
+struct _GtkGLCanvas {
+    GtkWidget parent_instance;
+};
+
+struct _GtkGLCanvasClass {
+    GtkWidgetClass parent_class;
+};
+
+
 G_DEFINE_TYPE(GtkGLCanvas, gtk_gl_canvas, GTK_TYPE_WIDGET)
 
 static void gtk_gl_canvas_realize (GtkWidget *wid);
@@ -69,8 +78,9 @@ gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr)
 {
 	if (gtk_gl_canvas_has_context(GTK_GL_CANVAS(wid)))
 		return FALSE;
-	else 
+	else
 	{
+        // Make a context-less canvas appear solid black
 		GtkAllocation alloc;		
 		gtk_widget_get_allocation(wid, &alloc);
 		cairo_set_source_rgb (cr, 0, 0, 0);
@@ -311,5 +321,29 @@ gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	g_assert(!priv->is_dummy && !priv->error);
 	gtk_gl_canvas_native_swap_buffers(wid);
+}
+
+
+GtkGLSupport
+gtk_gl_query_configuration_support(const GtkGLAttributes *attrs)
+{
+    // Currently this only checks for flags, not for general support.
+    
+    unsigned total_features = 0, supp_features = 0, i;
+    for (i = 0; i < sizeof(GtkGLFeature) * CHAR_BIT; ++i)
+    {
+        if (attrs->flags & 1 << i)
+        {
+            ++total_features;
+            if (gtk_gl_query_feature_support(1 << i)) ++supp_features;
+        }
+    }
+
+    if (total_features == supp_features)
+        return GTK_GL_FULLY_SUPPORTED;
+    else if (supp_features)
+        return GTK_GL_PARTIALLY_SUPPORTED;
+    else
+        return GTK_GL_UNSUPPORTED;        
 }
 
