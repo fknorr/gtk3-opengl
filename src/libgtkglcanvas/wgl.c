@@ -1,20 +1,20 @@
 /** 
  * Copyright (c) 2014, Fabian Knorr
  * 
- * This file is part of libgtk3-opengl.
+ * This file is part of libgtkglcanvas.
  *
- * libgtk3-opengl is free software: you can redistribute it and/or modify
+ * libgtkglcanvas is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * libgtk3-opengl is distributed in the hope that it will be useful,
+ * libgtkglcanvas is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with libgtk3-opengl. If not, see <http://www.gnu.org/licenses/>.
+ * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "canvas.h"
@@ -123,7 +123,7 @@ w32_init(void)
         dummy = CreateWindowEx(0, //WS_EX_TRANSPARENT,
         "GLCanvas",
         "",
-        WS_VISIBLE,
+        0,
         0, 0, 10, 10,
         NULL,
         NULL,
@@ -266,7 +266,8 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
         return FALSE;
     }
     ShowWindow(native->canvas, SW_SHOW);
-    g_signal_connect(GTK_WIDGET(canvas), "size-allocate", G_CALLBACK(on_size_allocate), NULL);
+    g_signal_connect(GTK_WIDGET(canvas), "size-allocate",
+        G_CALLBACK(on_size_allocate), NULL);
     
     dc = GetDC(native->canvas);
 	native->dc = dc;
@@ -331,5 +332,18 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
 gboolean
 gtk_gl_supports_feature(int feature)
 {
-    return FALSE;
+    w32_init();
+    
+    switch (feature)
+    {
+        case GTK_GL_DOUBLE_BUFFERED:
+        case GTK_GL_STEREO:
+            return TRUE;
+
+        case GTK_GL_SAMPLE_BUFFERS:
+            return !!dyn_wglChoosePixelFormatARB;
+
+        default:
+            return FALSE;
+    }
 }
