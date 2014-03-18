@@ -168,3 +168,9 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
     glXSwapBuffers(native->xdis, native->xwin);
 }
 
+
+gboolean
+gtk_gl_supports_feature(int feature)
+{
+    return FALSE;
+}

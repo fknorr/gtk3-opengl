@@ -1,15 +1,15 @@
 # This file is part of libgtk3-opengl.
-# 
+#
 # libgtk3-opengl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published
 # by the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # libgtk3-opengl is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with libgtk3-opengl.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -28,11 +28,11 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 
-PKG_CHECK_MODULES([GTK], [gtk+-3.0])
+PKG_CHECK_MODULES([GTK], [gtk+-3.0], [], [AC_MSG_ERROR([Missing dependencies])])
 
-PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0], 
-	[have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`],
-	[ac_gladeui_catdir=; have_glade=no])
+PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
+    [have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`],
+    [ac_gladeui_catdir=; have_glade=no])
 
 
 dnl ***************************************************************************

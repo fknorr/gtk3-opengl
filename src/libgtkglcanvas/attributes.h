@@ -20,12 +20,23 @@
 
 #pragma once
 
-enum
+
+G_BEGIN_DECLS
+
+
+typedef enum _GtkGLFeature
 {
 	GTK_GL_DOUBLE_BUFFERED = 1,
 	GTK_GL_STEREO = 2,
 	GTK_GL_SAMPLE_BUFFERS = 4
-};
+} GtkGLFeature;
+
+typedef enum _GtkGLSupport
+{
+    GTK_GL_UNSUPPORTED,
+    GTK_GL_PARTIALLY_SUPPORTED,
+    GTK_GL_FULLY_SUPPORTED
+} GtkGLSupport;
 
 typedef struct _GtkGLAttributes GtkGLAttributes;
 
@@ -36,3 +47,10 @@ struct _GtkGLAttributes {
 	unsigned depth_buffer_bits;
 	unsigned stencil_buffer_bits;
 };
+
+
+GtkGLSupport gtk_gl_query_feature_support(GtkGLFeature feature);
+GtkGLSupport gtk_gl_query_configuration_support(const GtkGLAttributes *attrs);
+
+
+G_END_DECLS

@@ -14,22 +14,22 @@
 # along with libgtk3-opengl.  If not, see <http://www.gnu.org/licenses/>.
 
 
-check_PROGRAMS = example
+check_PROGRAMS = $(top_builddir)/example
 
-example_SOURCES = \
+__top_builddir__example_SOURCES = \
 	main.c
 
-example_LDADD = \
-	../libgtkglcanvas/libgtkglcanvas.la -lm -lGL \
+__top_builddir__example_LDADD = \
+	$(top_builddir)/libgtkglcanvas.la -lm -lGL \
 	@GTK_LIBS@
 
-example_CPPFLAGS = \
+__top_builddir__example_CPPFLAGS = \
     @GTK_CFLAGS@
 
 if PLATFORM_WIN32
-example_LDFLAGS = \
+__top_builddir__example_LDFLAGS = \
 	-Wl,--export-all-symbols
 else
-example_CFLAGS = \
+__top_builddir__example_CFLAGS = \
 	-rdynamic
 endif

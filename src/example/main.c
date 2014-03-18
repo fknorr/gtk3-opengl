@@ -115,7 +115,7 @@ example_animate(gpointer ud)
 	{
 		// some triangle rotation stuff
 		s += 0.03f;
-
+        
 		gtk_widget_queue_draw(GTK_WIDGET(canvas));
 	}
 	return TRUE;

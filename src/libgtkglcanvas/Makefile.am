@@ -15,7 +15,7 @@
 
 
 lib_LTLIBRARIES =  \
-	libgtkglcanvas.la
+	$(top_builddir)/libgtkglcanvas.la
 
 if PLATFORM_WIN32
 platform_sources = wgl.c
@@ -25,7 +25,7 @@ platform_sources = glx.c
 platform_def = -DPLATFORM_X11
 endif
 
-libgtkglcanvas_la_SOURCES = \
+__top_builddir__libgtkglcanvas_la_SOURCES = \
 	canvas.c \
 	$(platform_sources)
 
@@ -37,6 +37,8 @@ gladedir = $(GLADEUI_CATDIR)
 glade_DATA = gtkglcanvas.xml
 endif
 
-libgtkglcanvas_la_CFLAGS = @GTK_CFLAGS@ $(platform_def)
-libgtkglcanvas_la_LIBADD = @GTK_LIBS@
+__top_builddir__libgtkglcanvas_la_CFLAGS = \
+	@GTK_CFLAGS@ $(platform_def)
+__top_builddir__libgtkglcanvas_la_LIBADD = \
+	@GTK_LIBS@
 
