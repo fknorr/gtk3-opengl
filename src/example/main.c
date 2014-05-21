@@ -165,8 +165,10 @@ example_draw_gl(void)
 gboolean
 example_create_context(void)
 {
-	GtkGLAttributes attrs = { GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS,
-		8, 24 };
+	GtkGLAttributes attrs = {
+        GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS, 4
+		24, 24, 0
+    };
 
 	if (gtk_gl_canvas_has_context(canvas))
 		message_box(GTK_MESSAGE_ERROR, "Context exists already");
