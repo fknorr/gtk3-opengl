@@ -67,16 +67,12 @@ AM_CONDITIONAL(HAVE_GLADEUI, test x"$have_glade" = "xyes")
 
 AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
 
+pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s/'//gp;q;}"`"
+AC_SUBST(PKG_CONFIG_DIR, "$pkgconfig_dir")
+
 LT_INIT([win32-dll])
 
-m4_ifdef([GTK_DOC_CHECK], [
-GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
-canvdocdir=docs/reference/libgtkglcanvas/Makefile
-],[
-AM_CONDITIONAL([ENABLE_GTK_DOC], false)
-canvdocdir=
-])
-AC_CONFIG_MACRO_DIR(m4)
+AC_CONFIG_MACRO_DIR([m4])
 
 
 AC_OUTPUT([
@@ -84,5 +80,4 @@ Makefile
 src/Makefile
 src/libgtkglcanvas/Makefile
 src/example/Makefile
-docs/reference/libgtkglcanvas/Makefile
 ])

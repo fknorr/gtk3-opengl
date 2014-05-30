@@ -37,6 +37,12 @@ gladedir = $(GLADEUI_CATDIR)
 glade_DATA = gtkglcanvas.xml
 endif
 
+gtkglcanvas.pc:
+	sed "s!%!$(prefix)!" $(srcdir)/gtkglcanvas.pc.tmpl > gtkglcanvas.pc
+
+pkgconfigdir = $(PKG_CONFIG_DIR)
+pkgconfig_DATA = gtkglcanvas.pc
+
 __top_builddir__libgtkglcanvas_la_CFLAGS = \
 	@GTK_CFLAGS@ $(platform_def)
 __top_builddir__libgtkglcanvas_la_LIBADD = \
