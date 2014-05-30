@@ -20,9 +20,12 @@ lib_LTLIBRARIES =  \
 if PLATFORM_WIN32
 platform_sources = wgl.c
 platform_def = -DPLATFORM_WIN32
+platform_cflags = $(X11_CFLAGS) $(GL_CFLAGS)
+platform_libs =
 else
 platform_sources = glx.c
 platform_def = -DPLATFORM_X11
+platform_libs = $(X11_LIBS) $(GL_LIBS)
 endif
 
 __top_builddir__libgtkglcanvas_la_SOURCES = \
@@ -44,7 +47,7 @@ pkgconfigdir = $(PKG_CONFIG_DIR)
 pkgconfig_DATA = gtkglcanvas.pc
 
 __top_builddir__libgtkglcanvas_la_CFLAGS = \
-	@GTK_CFLAGS@ $(platform_def)
+	$(GTK_CFLAGS) $(platform_def) $(platform_cflags)
 __top_builddir__libgtkglcanvas_la_LIBADD = \
-	@GTK_LIBS@
-
+	$(GTK_LIBS) $(platform_libs)
+	

@@ -166,7 +166,7 @@ gboolean
 example_create_context(void)
 {
 	GtkGLAttributes attrs = {
-        GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS, 4
+        GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS, 4,
 		24, 24, 0
     };
 
@@ -206,26 +206,12 @@ main(int argc, char *argv[])
 {
 	GtkBuilder *builder;
 	GError *error = NULL;
-	GFile *exe_file, *path_file;
-	char *directory, *ui_path;
-
-	exe_file = g_file_new_for_path(argv[0]);
-	path_file = g_file_get_parent(exe_file);
-	directory = g_file_get_path(path_file);
-	ui_path = g_malloc(strlen(directory) + 12);
-	strcpy(ui_path, directory);
-	strcat(ui_path, "/example.ui");
-	g_object_unref(exe_file);
-	g_object_unref(path_file);	
-
-	puts(ui_path);
 	
     gtk_init(&argc, &argv);
 	
 	builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, ui_path, &error);
+	gtk_builder_add_from_file(builder, "example.ui", &error);
 	if (error) g_error(error->message);
-    free(ui_path);
 	
 	gtk_builder_connect_signals(builder, NULL);
 	
