@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 	
 	builder = gtk_builder_new();
 	gtk_builder_add_from_file(builder, "example.ui", &error);
-	if (error) g_error(error->message);
+	if (error) g_error("%s", error->message);
 	
 	gtk_builder_connect_signals(builder, NULL);
 	
