@@ -93,13 +93,19 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
     XVisualInfo *vi;
 
     // GLX expects a key-value-array for its parameters. 
-    int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 
-		GLX_SAMPLES, (int) attrs->num_samples,
-		None, None, None, None };
+    int att[] = {
+            GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 
+            GLX_SAMPLES, (int) attrs->num_samples,
+            None, None, None, None },
+        fallback_att[] = {
+            GLX_RGBA, None, None };
 	int *att_ptr = att+5;
 
-	if (attrs->flags & GTK_GL_DOUBLE_BUFFERED)
+	if (attrs->flags & GTK_GL_DOUBLE_BUFFERED) {
 		*att_ptr++ = GLX_DOUBLEBUFFER;
+        fallback_att[1] = GLX_DOUBLEBUFFER;
+    }
+    
 	if (attrs->flags & GTK_GL_STEREO)
 		*att_ptr++ = GLX_STEREO;
 	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) 
@@ -120,9 +126,13 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 	}	
 	
     vi = glXChooseVisual(native->xdis, 0, att);
-	if (!vi) 
-	{
-		priv->error_msg = strdup("Unable to get X visual for the specified attributes");
+    if (!vi) {
+        g_warning("GtkGLCanvas: Falling back to default X visual");
+        vi = glXChooseVisual(native->xdis, 0, fallback_att);
+    }
+    
+	if (!vi) {
+		priv->error_msg = strdup("Unable to get X visual");
 		return FALSE;
 	}	
 	
