@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (c) 2014, Fabian Knorr
- * 
+ *
  * This file is part of libgtkglcanvas.
  *
  * libgtkglcanvas is free software: you can redistribute it and/or modify
@@ -18,25 +18,25 @@
  */
 
 /**
- * This file is based on the work of André Diego Piske, 
+ * This file is based on the work of André Diego Piske,
  * see <https://github.com/andrepiske/tegtkgl>. To retain André's licensing
- * conditions on the parts of the software authored by him, the following 
+ * conditions on the parts of the software authored by him, the following
  * copyright notice shall be included in this and all derived files:
  */
 
 /**
  * Copyright (c) 2013 André Diego Piske
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -69,43 +69,40 @@ G_DEFINE_TYPE(GtkGLCanvas, gtk_gl_canvas, GTK_TYPE_WIDGET)
 static void gtk_gl_canvas_realize (GtkWidget *wid);
 static void gtk_gl_canvas_unrealize (GtkWidget *wid);
 static void gtk_gl_canvas_send_configure(GtkWidget *wid);
-static void gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation);
+static void gtk_gl_canvas_size_allocate(GtkWidget *wid,
+        GtkAllocation *allocation);
 static gboolean gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr);
 
 
 static gboolean
-gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr)
-{
-	if (gtk_gl_canvas_has_context(GTK_GL_CANVAS(wid)))
+gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr) {
+	if (gtk_gl_canvas_has_context(GTK_GL_CANVAS(wid))) {
 		return FALSE;
-	else
-	{
-        // Make a context-less canvas appear solid black
-		GtkAllocation alloc;		
-		gtk_widget_get_allocation(wid, &alloc);
-		cairo_set_source_rgb (cr, 0, 0, 0);
-		cairo_rectangle(cr, alloc.x, alloc.y, alloc.width, alloc.height);
-		cairo_fill(cr);
-		return TRUE;
-	}
+    }
+
+    // Make a context-less canvas appear solid black
+	GtkAllocation alloc;
+	gtk_widget_get_allocation(wid, &alloc);
+	cairo_set_source_rgb (cr, 0, 0, 0);
+	cairo_rectangle(cr, alloc.x, alloc.y, alloc.width, alloc.height);
+	cairo_fill(cr);
+	return TRUE;
 }
 
 
 static void
-gtk_gl_canvas_finalize(GObject *obj)
-{
+gtk_gl_canvas_finalize(GObject *obj) {
 	GtkGLCanvas *canvas = GTK_GL_CANVAS(obj);
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	free(priv->native);
 	free(priv->error_msg);
-	
+
     G_OBJECT_CLASS(gtk_gl_canvas_parent_class)->finalize(obj);
 }
 
 
 static void
-gtk_gl_canvas_class_init(GtkGLCanvasClass *klass)
-{
+gtk_gl_canvas_class_init(GtkGLCanvasClass *klass) {
     GtkWidgetClass *wklass;
     GObjectClass *oklass;
 
@@ -122,12 +119,11 @@ gtk_gl_canvas_class_init(GtkGLCanvasClass *klass)
 }
 
 
-static void
-gtk_gl_canvas_create_window(GtkWidget *wid, const GtkGLAttributes *attrs);
+static void gtk_gl_canvas_create_window(GtkWidget *wid,
+        const GtkGLAttributes *attrs);
 
 void
-gtk_gl_canvas_realize(GtkWidget *wid)
-{
+gtk_gl_canvas_realize(GtkWidget *wid) {
     GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
     priv->disp = gdk_display_get_default();
@@ -141,7 +137,7 @@ gtk_gl_canvas_realize(GtkWidget *wid)
     gtk_widget_get_allocation(wid, &allocation);
 
 	priv->effective_depth = 24;
-	
+
     attributes.window_type = GDK_WINDOW_CHILD;
     attributes.x = allocation.x;
     attributes.y = allocation.y;
@@ -149,12 +145,16 @@ gtk_gl_canvas_realize(GtkWidget *wid)
     attributes.height = allocation.height;
     attributes.wclass = GDK_INPUT_OUTPUT;
     attributes.visual = gdk_visual_get_best_with_both(priv->effective_depth,
-        GDK_VISUAL_DIRECT_COLOR);
+            GDK_VISUAL_DIRECT_COLOR);
 
-	if (!attributes.visual)
+	if (!attributes.visual) {
 		attributes.visual = gdk_visual_get_system ();
-	
-	attributes.event_mask = gtk_widget_get_events(wid);
+    }
+
+	attributes.event_mask = gtk_widget_get_events(wid)
+            | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK
+            | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK
+            | GDK_POINTER_MOTION_HINT_MASK | GDK_SCROLL_MASK;
     attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, attributes_mask);
@@ -162,19 +162,17 @@ gtk_gl_canvas_realize(GtkWidget *wid)
 	gdk_window_set_background_rgba(priv->win, &black);
     gtk_widget_set_window(wid, priv->win);
     g_object_ref(wid);
-	
+
     gtk_gl_canvas_send_configure(wid);
 }
 
 
 void
-gtk_gl_canvas_unrealize(GtkWidget *wid)
-{
+gtk_gl_canvas_unrealize(GtkWidget *wid) {
     GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
 
-	if (!priv->is_dummy)
-	{
+	if (!priv->is_dummy) 	{
 		gtk_gl_canvas_native_destroy_context(gtkgl);
 		priv->is_dummy = TRUE;
 	}
@@ -184,11 +182,10 @@ gtk_gl_canvas_unrealize(GtkWidget *wid)
 
 
 static void
-gtk_gl_canvas_init(GtkGLCanvas *self)
-{
+gtk_gl_canvas_init(GtkGLCanvas *self) {
     GtkWidget *wid = (GtkWidget*)self;
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
-	
+
 	priv->native = gtk_gl_canvas_native_new();
 	priv->is_dummy = TRUE;
 	priv->error = FALSE;
@@ -202,8 +199,7 @@ gtk_gl_canvas_init(GtkGLCanvas *self)
 
 
 static void
-gtk_gl_canvas_send_configure(GtkWidget *wid)
-{
+gtk_gl_canvas_send_configure(GtkWidget *wid) {
     GtkAllocation allocation;
     GdkEvent *event = gdk_event_new(GDK_CONFIGURE);
 
@@ -222,8 +218,7 @@ gtk_gl_canvas_send_configure(GtkWidget *wid)
 
 
 static void
-gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
-{
+gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation) {
     g_return_if_fail(GTK_GL_IS_CANVAS(wid));
     g_return_if_fail(allocation != NULL);
 
@@ -242,46 +237,44 @@ gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation)
 }
 
 GtkWidget*
-gtk_gl_canvas_new(void)
-{
+gtk_gl_canvas_new(void) {
     GtkGLCanvas* canvas = g_object_new(GTK_GL_TYPE_CANVAS, NULL);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	
+
 	return GTK_WIDGET(canvas);
 }
 
 
-gboolean 
-gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
-{
+gboolean
+gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
+        const GtkGLAttributes *attrs) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	gboolean success;
 
 	priv->error = FALSE;
 	priv->error_msg = NULL;
-	if (!priv->is_dummy)
+	if (!priv->is_dummy) {
 		gtk_gl_canvas_native_destroy_context(canvas);
-	
+    }
+
 	success = gtk_gl_canvas_native_create_context(canvas, attrs);
 	priv->is_dummy = priv->error = !success;
 
 	gtk_widget_queue_draw(GTK_WIDGET(canvas));
-	
+
 	return success;
 }
 
 
-void 
-gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas)
-{
+void
+gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	g_assert(!priv->is_dummy && !priv->error);
 	gtk_gl_canvas_native_destroy_context(canvas);
-	
+
 	priv->is_dummy = TRUE;
 	priv->error = FALSE;
-	if (priv->error_msg)
-	{
+	if (priv->error_msg) {
 		free(priv->error_msg);
 		priv->error_msg = NULL;
 	}
@@ -291,33 +284,29 @@ gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas)
 
 
 gboolean
-gtk_gl_canvas_has_context(GtkGLCanvas *canvas)
-{
+gtk_gl_canvas_has_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	return !priv->is_dummy;
 }
 
 
 void
-gtk_gl_canvas_make_current(GtkGLCanvas *wid)
-{
+gtk_gl_canvas_make_current(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	g_assert(!priv->is_dummy && !priv->error);
 	gtk_gl_canvas_native_make_current(wid);
 }
 
 
-const char* 
-gtk_gl_canvas_get_error (GtkGLCanvas *canvas)
-{
+const char*
+gtk_gl_canvas_get_error (GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	return priv->error_msg;
 }
-	
+
 
 void
-gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
-{
+gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	g_assert(!priv->is_dummy && !priv->error);
 	gtk_gl_canvas_native_swap_buffers(wid);
@@ -325,25 +314,23 @@ gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid)
 
 
 GtkGLSupport
-gtk_gl_query_configuration_support(const GtkGLAttributes *attrs)
-{
+gtk_gl_query_configuration_support(const GtkGLAttributes *attrs) {
     // Currently this only checks for flags, not for general support.
-    
+
     unsigned total_features = 0, supp_features = 0, i;
-    for (i = 0; i < sizeof(GtkGLFeature) * CHAR_BIT; ++i)
-    {
-        if (attrs->flags & 1 << i)
-        {
+    for (i = 0; i < sizeof(GtkGLFeature) * CHAR_BIT; ++i) {
+        if (attrs->flags & 1 << i) {
             ++total_features;
             if (gtk_gl_query_feature_support(1 << i)) ++supp_features;
         }
     }
 
-    if (total_features == supp_features)
+    if (total_features == supp_features) {
         return GTK_GL_FULLY_SUPPORTED;
-    else if (supp_features)
+    } else if (supp_features) {
         return GTK_GL_PARTIALLY_SUPPORTED;
-    else
-        return GTK_GL_UNSUPPORTED;        
+    } else {
+        return GTK_GL_UNSUPPORTED;
+    }
 }
 

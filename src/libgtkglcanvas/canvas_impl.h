@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (c) 2014, Fabian Knorr
- * 
+ *
  * This file is part of libgtkglcanvas.
  *
  * libgtkglcanvas is free software: you can redistribute it and/or modify
@@ -39,12 +39,14 @@ struct _GtkGLCanvas_Priv {
 
 
 GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
-gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs);
+gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
+        const GtkGLAttributes *attrs);
 void gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas);
 void gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas);
 void gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas);
 
 
 #define GTK_GL_CANVAS_GET_PRIV(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE((obj), GTK_GL_TYPE_CANVAS, GtkGLCanvas_Priv))
+	(G_TYPE_INSTANCE_GET_PRIVATE((obj), GTK_GL_TYPE_CANVAS, \
+        GtkGLCanvas_Priv))
 

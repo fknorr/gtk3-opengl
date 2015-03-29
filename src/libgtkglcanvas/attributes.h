@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (c) 2014, Fabian Knorr
- * 
+ *
  * This file is part of libgtkglcanvas.
  *
  * libgtkglcanvas is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <glib.h>
+
 
 G_BEGIN_DECLS
 
@@ -34,7 +36,7 @@ typedef enum _GtkGLFeature
      * Whether the context uses two framebuffers to avoid tearing.
      * If this flag is used, @ref gtk_gl_canvas_swap_buffers must be called
      * after drawing a frame in order to display it.
-     */     
+     */
 	GTK_GL_DOUBLE_BUFFERED = 1,
 
     /**

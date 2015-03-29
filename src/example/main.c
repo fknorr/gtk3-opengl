@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (c) 2014, Fabian Knorr
- * 
+ *
  * This file is part of libgtkglcanvas.
  *
  * libgtkglcanvas is free software: you can redistribute it and/or modify
@@ -18,25 +18,25 @@
  */
 
 /**
- * This file is based on the work of André Diego Piske, 
+ * This file is based on the work of André Diego Piske,
  * see <https://github.com/andrepiske/tegtkgl>. To retain André's licensing
- * conditions on the parts of the software authored by him, the following 
+ * conditions on the parts of the software authored by him, the following
  * copyright notice shall be included in this and all derived files:
  */
 
 /**
  * Copyright (c) 2013 André Diego Piske
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -62,42 +62,41 @@ static GtkWidget *window;
 static GtkGLCanvas *canvas;
 
 
-static void 
-message_box_response(GtkDialog *dialog)
-{
+static void
+message_box_response(GtkDialog *dialog) {
 	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
 
-static void 
-message_box(int type, const char *msg)
-{
-	GtkWidget *dlg = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_MODAL, 
-	                                        type, GTK_BUTTONS_OK, "%s", msg);
-	g_signal_connect(G_OBJECT(dlg), "response", G_CALLBACK(message_box_response), NULL);
+static void
+message_box(int type, const char *msg) {
+	GtkWidget *dlg = gtk_message_dialog_new(GTK_WINDOW(window),
+            GTK_DIALOG_MODAL, type, GTK_BUTTONS_OK, "%s", msg);
+	g_signal_connect(G_OBJECT(dlg), "response",
+            G_CALLBACK(message_box_response), NULL);
 	gtk_dialog_run(GTK_DIALOG(dlg));
 }
 
 
 gboolean
-example_start_animation(void)
-{
-	if (!gtk_gl_canvas_has_context(canvas))
+example_start_animation(void) {
+	if (!gtk_gl_canvas_has_context(canvas)) {
 		message_box(GTK_MESSAGE_ERROR, "No context present");
-	else
+    } else {
 		running = TRUE;
+    }
 	return TRUE;
 }
 
 
-gboolean 
+gboolean
 example_stop_animation(void) {
     running = FALSE;
 	return TRUE;
 }
 
 
-gboolean 
+gboolean
 example_click(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
     char *msg;
 	asprintf(&msg, "Clicked at %.3fx%.3f with button %d\n",
@@ -108,14 +107,12 @@ example_click(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
 
 static float s = 0.f;
 
-static gboolean 
-example_animate(gpointer ud) 
-{
-    if (running)
-	{
+static gboolean
+example_animate(gpointer ud) {
+    if (running) {
 		// some triangle rotation stuff
 		s += 0.03f;
-        
+
 		gtk_widget_queue_draw(GTK_WIDGET(canvas));
 	}
 	return TRUE;
@@ -123,15 +120,14 @@ example_animate(gpointer ud)
 
 
 gboolean
-example_draw_gl(void)
-{
+example_draw_gl(void) {
 	if (!gtk_gl_canvas_has_context(canvas))
 		return FALSE;
-	
-	// this is very important, as OpenGL has a somewhat global state. 
+
+	// this is very important, as OpenGL has a somewhat global state.
 	// this will set the OpenGL state to this very widget.
 	gtk_gl_canvas_make_current(canvas);
-	
+
     // more bureaucracy
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -163,28 +159,26 @@ example_draw_gl(void)
 
 
 gboolean
-example_create_context(void)
-{
+example_create_context(void) {
 	GtkGLAttributes attrs = {
         GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS, 4,
 		24, 24, 0
     };
 
-	if (gtk_gl_canvas_has_context(canvas))
+	if (gtk_gl_canvas_has_context(canvas)) {
 		message_box(GTK_MESSAGE_ERROR, "Context exists already");
-	else if (!gtk_gl_canvas_create_context(canvas, &attrs))
+    } else if (!gtk_gl_canvas_create_context(canvas, &attrs)) {
 		message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
+    }
 	return TRUE;
 }
 
 
-gboolean 
-example_destroy_context(void)
-{
-	if (!gtk_gl_canvas_has_context(canvas))
+gboolean
+example_destroy_context(void) {
+	if (!gtk_gl_canvas_has_context(canvas)) {
 		message_box(GTK_MESSAGE_ERROR, "No context present");
-	else
-	{
+    } else {
 		running = FALSE;
 		gtk_gl_canvas_destroy_context(canvas);
 	}
@@ -193,28 +187,26 @@ example_destroy_context(void)
 
 
 gboolean
-example_check_context(void)
-{
-	const char *msg = gtk_gl_canvas_has_context(canvas) 
+example_check_context(void) {
+	const char *msg = gtk_gl_canvas_has_context(canvas)
 		? "I have a context" : "I don't have a context";
 	message_box(GTK_MESSAGE_INFO, msg);
 }
 
 
-int 
-main(int argc, char *argv[]) 
-{
+int
+main(int argc, char *argv[]) {
 	GtkBuilder *builder;
 	GError *error = NULL;
-	
+
     gtk_init(&argc, &argv);
-	
+
 	builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, "example.ui", &error);
+	gtk_builder_add_from_file(builder, "src/example/example.ui", &error);
 	if (error) g_error("%s", error->message);
-	
+
 	gtk_builder_connect_signals(builder, NULL);
-	
+
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
 	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
 

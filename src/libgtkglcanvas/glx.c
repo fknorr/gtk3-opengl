@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (c) 2014, Fabian Knorr
- * 
+ *
  * This file is part of libgtkglcanvas.
  *
  * libgtkglcanvas is free software: you can redistribute it and/or modify
@@ -18,25 +18,25 @@
  */
 
 /**
- * This file is based on the work of André Diego Piske, 
+ * This file is based on the work of André Diego Piske,
  * see <https://github.com/andrepiske/tegtkgl>. To retain André's licensing
- * conditions on the parts of the software authored by him, the following 
+ * conditions on the parts of the software authored by him, the following
  * copyright notice shall be included in this and all derived files:
  */
 
 /**
  * Copyright (c) 2013 André Diego Piske
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -66,8 +66,7 @@
 #include <glib-object.h>
 
 
-struct _GtkGLCanvas_NativePriv 
-{	
+struct _GtkGLCanvas_NativePriv {
     Display *xdis;
     Window xwin;
     GLXContext glc;
@@ -75,8 +74,7 @@ struct _GtkGLCanvas_NativePriv
 
 
 GtkGLCanvas_NativePriv*
-gtk_gl_canvas_native_new()
-{
+gtk_gl_canvas_native_new() {
 	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
 	native->glc = NULL;
 	native->xwin = 0;
@@ -86,15 +84,15 @@ gtk_gl_canvas_native_new()
 
 
 gboolean
-gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *attrs)
-{
+gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
+        const GtkGLAttributes *attrs) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
 
-    // GLX expects a key-value-array for its parameters. 
+    // GLX expects a key-value-array for its parameters.
     int att[] = {
-            GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits, 
+            GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits,
             GLX_SAMPLES, (int) attrs->num_samples,
             None, None, None, None },
         fallback_att[] = {
@@ -105,56 +103,57 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas, const GtkGLAttributes *
 		*att_ptr++ = GLX_DOUBLEBUFFER;
         fallback_att[1] = GLX_DOUBLEBUFFER;
     }
-    
-	if (attrs->flags & GTK_GL_STEREO)
+
+	if (attrs->flags & GTK_GL_STEREO) {
 		*att_ptr++ = GLX_STEREO;
-	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) 
+    }
+	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) {
 		*att_ptr++ = GLX_SAMPLE_BUFFERS;
-	
+    }
+
     native->xwin = gdk_x11_window_get_xid(priv->win);
-	if (!native->xwin) 
+	if (!native->xwin)
 	{
 		priv->error_msg = strdup("Unable to get X11 window for canvas");
 		return FALSE;
-	}	
-	
+	}
+
     native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
-	if (!native->xdis) 
+	if (!native->xdis)
 	{
 		priv->error_msg = strdup("Unable to get X display");
 		return FALSE;
-	}	
-	
+	}
+
     vi = glXChooseVisual(native->xdis, 0, att);
     if (!vi) {
         g_warning("GtkGLCanvas: Falling back to default X visual");
         vi = glXChooseVisual(native->xdis, 0, fallback_att);
     }
-    
+
 	if (!vi) {
 		priv->error_msg = strdup("Unable to get X visual");
 		return FALSE;
-	}	
-	
-    native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);	
-	if (!native->glc) 
+	}
+
+    native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);
+	if (!native->glc)
 	{
 		priv->error_msg = strdup("Unable to create GLX context");
 		return FALSE;
-	}	
-	
+	}
+
 	priv->effective_depth = vi->depth;
 	return TRUE;
 }
 
 
-void 
-gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas)
-{
+void
+gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-	
-    if (native->xdis) {		
+
+    if (native->xdis) {
 		glXDestroyContext(native->xdis, native->glc);
 		native->glc = NULL;
 		native->xwin = 0;
@@ -164,8 +163,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas)
 
 
 void
-gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas)
-{
+gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     glXMakeCurrent(native->xdis, native->xwin, native->glc);
@@ -173,8 +171,7 @@ gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas)
 
 
 void
-gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
-{
+gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     glXSwapBuffers(native->xdis, native->xwin);
@@ -182,10 +179,8 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas)
 
 
 GtkGLSupport
-gtk_gl_query_feature_support(GtkGLFeature feature)
-{
-    switch (feature)
-    {
+gtk_gl_query_feature_support(GtkGLFeature feature) {
+    switch (feature) {
         case GTK_GL_DOUBLE_BUFFERED:
         case GTK_GL_STEREO:
         case GTK_GL_SAMPLE_BUFFERS:
