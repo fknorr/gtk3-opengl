@@ -194,6 +194,7 @@ gtk_gl_canvas_init(GtkGLCanvas *self) {
     gtk_widget_set_can_focus(wid, TRUE);
     gtk_widget_set_receives_default(wid, TRUE);
     gtk_widget_set_has_window(wid, TRUE);
+    gtk_widget_set_double_buffered(wid, FALSE);
 }
 
 
