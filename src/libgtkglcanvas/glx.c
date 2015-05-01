@@ -75,7 +75,7 @@ struct _GtkGLCanvas_NativePriv {
 
 GtkGLCanvas_NativePriv*
 gtk_gl_canvas_native_new() {
-	GtkGLCanvas_NativePriv *native = malloc(sizeof(GtkGLCanvas_NativePriv));
+	GtkGLCanvas_NativePriv *native = g_malloc(sizeof(GtkGLCanvas_NativePriv));
 	native->glc = NULL;
 	native->xwin = 0;
     native->xdis = NULL;
@@ -114,14 +114,14 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
     native->xwin = gdk_x11_window_get_xid(priv->win);
 	if (!native->xwin)
 	{
-		priv->error_msg = strdup("Unable to get X11 window for canvas");
+		priv->error_msg = g_strdup("Unable to get X11 window for canvas");
 		return FALSE;
 	}
 
     native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
 	if (!native->xdis)
 	{
-		priv->error_msg = strdup("Unable to get X display");
+		priv->error_msg = g_strdup("Unable to get X display");
 		return FALSE;
 	}
 
@@ -132,14 +132,14 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
     }
 
 	if (!vi) {
-		priv->error_msg = strdup("Unable to get X visual");
+		priv->error_msg = g_strdup("Unable to get X visual");
 		return FALSE;
 	}
 
     native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);
 	if (!native->glc)
 	{
-		priv->error_msg = strdup("Unable to create GLX context");
+		priv->error_msg = g_strdup("Unable to create GLX context");
 		return FALSE;
 	}
 
