@@ -84,7 +84,7 @@ gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr) {
 	GtkAllocation alloc;
 	gtk_widget_get_allocation(wid, &alloc);
 	cairo_set_source_rgb (cr, 0, 0, 0);
-	cairo_rectangle(cr, alloc.x, alloc.y, alloc.width, alloc.height);
+	cairo_rectangle(cr, 0, 0, alloc.width, alloc.height);
 	cairo_fill(cr);
 	return TRUE;
 }
@@ -333,4 +333,3 @@ gtk_gl_query_configuration_support(const GtkGLAttributes *attrs) {
         return GTK_GL_UNSUPPORTED;
     }
 }
-
