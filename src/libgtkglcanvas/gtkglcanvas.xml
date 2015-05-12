@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<glade-catalog name="gtkgl" library="gtk3-opengl" domain="gtkgl" depends="gtk+">
+<glade-catalog name="gtkgl" library="gtkglcanvas" domain="gtkgl" depends="gtk+">
 	<glade-widget-classes>
 		<glade-widget-class name="GtkGLCanvas" generic-name="glcanvas" title="GtkGLCanvas"/>
 	</glade-widget-classes>
