@@ -137,6 +137,8 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
 	}
 
     native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);
+    XFree(vi);
+
 	if (!native->glc)
 	{
 		priv->error_msg = g_strdup("Unable to create GLX context");
