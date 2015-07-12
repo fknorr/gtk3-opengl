@@ -53,6 +53,7 @@
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <stdlib.h>
+#include <GL/gl.h>
 
 
 struct _GtkGLCanvas {
@@ -245,24 +246,43 @@ gtk_gl_canvas_new(void) {
 }
 
 
-gboolean
-gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
-        const GtkGLAttributes *attrs) {
+static void
+gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	gboolean success;
-
 	priv->error = FALSE;
 	priv->error_msg = NULL;
 	if (!priv->is_dummy) {
 		gtk_gl_canvas_native_destroy_context(canvas);
     }
+}
 
-	success = gtk_gl_canvas_native_create_context(canvas, attrs);
+
+static void
+gtk_gl_canvas_after_create_context(GtkGLCanvas *canvas, gboolean success) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	priv->is_dummy = priv->error = !success;
-
 	gtk_widget_queue_draw(GTK_WIDGET(canvas));
+}
 
+
+gboolean
+gtk_gl_canvas_create_context(GtkGLCanvas *canvas, GtkGLVisual vis) {
+    gtk_gl_canvas_before_create_context(canvas);
+	success = gtk_gl_canvas_native_create_context(canvas, vis);
+    gtk_gl_canvas_after_create_context(canvas, success);
 	return success;
+}
+
+
+gboolean
+gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
+       GtkGLVisual vis, unsigned ver_major, unsigned ver_minor,
+       GtkGLProfile profile) {
+    gtk_gl_canvas_before_create_context(canvas);
+    success = gtk_gl_canvas_native_create_context_with_version(canvas, vis,
+            ver_major, ver_minor, profile);
+    gtk_gl_canvas_after_create_context(canvas, success);
+    return success;
 }
 
 
@@ -306,31 +326,13 @@ gtk_gl_canvas_get_error (GtkGLCanvas *canvas) {
 
 
 void
-gtk_gl_canvas_swap_buffers(GtkGLCanvas *wid) {
+gtk_gl_canvas_display_frame(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	g_assert(!priv->is_dummy && !priv->error);
-	gtk_gl_canvas_native_swap_buffers(wid);
-}
 
-
-GtkGLSupport
-gtk_gl_query_configuration_support(const GtkGLAttributes *attrs) {
-    // Currently this only checks for flags, not for general support.
-
-    unsigned total_features = 0, supp_features = 0, i;
-    for (i = 0; i < sizeof(GtkGLFeature) * CHAR_BIT; ++i) {
-        if (attrs->flags & 1 << i) {
-            ++total_features;
-            if (gtk_gl_query_feature_support(1 << i)) ++supp_features;
-        }
-    }
-
-    if (total_features == supp_features) {
-        return GTK_GL_FULLY_SUPPORTED;
-    } else if (supp_features) {
-        return GTK_GL_PARTIALLY_SUPPORTED;
+    if (priv->double_buffered) {
+        gtk_gl_canvas_native_swap_buffers(wid);
     } else {
-        return GTK_GL_UNSUPPORTED;
+        glFlush();
     }
 }
-

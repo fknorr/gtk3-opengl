@@ -50,4 +50,3 @@ __top_builddir__libgtkglcanvas_la_CFLAGS = \
 	$(GTK_CFLAGS) $(platform_def) $(platform_cflags)
 __top_builddir__libgtkglcanvas_la_LIBADD = \
 	$(GTK_LIBS) $(platform_libs)
-

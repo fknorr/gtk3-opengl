@@ -50,7 +50,7 @@
 #pragma once
 
 #include <gtk/gtk.h>
-#include "attributes.h"
+#include "visual.h"
 
 
 G_BEGIN_DECLS
@@ -67,6 +67,12 @@ G_BEGIN_DECLS
         GTK_GL_TYPE_CANVAS_CLASS))
 #define GTK_GL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTK_GL_TYPE_CANVAS, \
         GtkGLCanvasClass))
+
+
+typedef enum _GtkGLProfile {
+    GTK_GL_CORE_PROFILE,
+    GTK_GL_COMPATIBILITY_PROFILE
+} GtkGLProfile;
 
 
 /**
@@ -99,19 +105,35 @@ GtkWidget *gtk_gl_canvas_new(void);
  * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
  * current to the calling thread.
  *
- * The method finds the closest match of available context types to the
- * attributes supplied.
+ * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
+ * returns the error message.
+ *
+ * @param canvas The canvas
+ * @param vis The visual to create the context for
+ * @return Whether context creation was successful
+ */
+gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual vis);
+
+
+/**
+ * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
+ * current to the calling thread. Unlike gtk_gl_canvas_create_context, this
+ * function allows the user to specify the desired GL version and profile.
  *
  * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
  * returns the error message.
  *
  * @param canvas The canvas
- * @param attrs The attributes for the context to be created
- * @return Whether context creation was successfull
+ * @param vis The visual to create the context for
+ * @param ver_major The desired GL major version
+ * @param ver_minor The desired GL minor version
+ * @param profile The desired GL profile
+ * @return Whether context creation was successful
  */
-gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
-        const GtkGLAttributes *attrs);
-
+gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
+        GtkGLVisual vis, unsigned ver_major, unsigned ver_minor,
+        GtkGLProfile profile);
 
 /**
  * Destroys an active context on a @ref GtkGLCanvas.
@@ -150,12 +172,11 @@ void gtk_gl_canvas_make_current(GtkGLCanvas* canvas);
 
 
 /**
- * Swaps the front and back buffer in a GL context created with the
- * @ref GTK_GL_DOUBLE_BUFFERED flag.
+ * Swaps the front and back buffer in a double-buffered GL context or flushes
+ * all GL draw calls in a single-buffered context.
  * @param canvas The canvas.
  */
-void gtk_gl_canvas_swap_buffers(GtkGLCanvas* canvas);
+void gtk_gl_canvas_display_frame(GtkGLCanvas* canvas);
 
 
 G_END_DECLS
-
