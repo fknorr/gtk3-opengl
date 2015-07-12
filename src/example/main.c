@@ -65,6 +65,8 @@ static GtkDialog *chooser;
 static GtkGLCanvas *canvas;
 static GtkLabel *info_label;
 static GtkTreeSelection *visual_selection;
+static GtkAdjustment *major_adjust, *minor_adjust;
+static GtkComboBox *profile_combo;
 
 
 static void
@@ -186,6 +188,8 @@ example_create_context(void) {
 		GtkGLVisualList *visuals = gtk_gl_canvas_enumerate_visuals(canvas);
 		size_t i;
 		GtkTreeIter iter;
+		unsigned ver_major, ver_minor;
+		GtkGLProfile profile;
 
 		gtk_list_store_clear(visual_list_store);
 		for (i = 0; i < visuals->count; ++i) {
@@ -233,7 +237,13 @@ example_create_context(void) {
 			g_free(path);
 		}
 
-		if (!gtk_gl_canvas_create_context(canvas, visuals->entries[i])) {
+		ver_major = (unsigned) gtk_adjustment_get_value(major_adjust);
+		ver_minor = (unsigned) gtk_adjustment_get_value(minor_adjust);
+		profile = gtk_combo_box_get_active(profile_combo) == 0
+				? GTK_GL_CORE_PROFILE : GTK_GL_COMPATIBILITY_PROFILE;
+
+		if (!gtk_gl_canvas_create_context_with_version(canvas,
+				visuals->entries[i], ver_major, ver_minor, profile)) {
 			message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
 		}
 		gtk_gl_visual_list_free(visuals);
@@ -290,6 +300,12 @@ main(int argc, char *argv[]) {
 	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
 	visual_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(
 			gtk_builder_get_object(builder, "visual-list")));
+	major_adjust = GTK_ADJUSTMENT(gtk_builder_get_object(builder,
+			"ver-major"));
+	minor_adjust = GTK_ADJUSTMENT(gtk_builder_get_object(builder,
+			"ver-minor"));
+	profile_combo = GTK_COMBO_BOX(gtk_builder_get_object(builder,
+			"profile-combobox"));
 
 	gtk_tree_selection_set_mode(visual_selection, GTK_SELECTION_SINGLE);
 
