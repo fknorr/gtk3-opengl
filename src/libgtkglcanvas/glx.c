@@ -178,7 +178,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
     int fbconfig_count;
     GLXFBConfig *fbconfigs;
     GtkGLVisualList *list;
-    size_t i;
+    size_t i, j;
 
     assert(native->dpy);
 
@@ -188,9 +188,15 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
-    for (i = 0; i < list->count; ++i) {
-        list->entries[i] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
+    for (i = 0, j = 0; i < list->count; ++i) {
+        int targets;
+        glXGetFBConfigAttrib(native->dpy, fbconfigs[i], GLX_DRAWABLE_TYPE,
+            & targets);
+        if (targets & GLX_WINDOW_BIT) {
+            list->entries[j++] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
+        }
     }
+    list->count = j;
     return list;
 }
 
