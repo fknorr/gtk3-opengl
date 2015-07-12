@@ -174,7 +174,7 @@ example_create_context(void) {
 		for (i = 0; i < visuals->count; ++i) {
 			GtkGLFramebufferConfig cfg;
 			gtk_gl_describe_visual(visuals->entries[i], &cfg);
-			gtk_list_store_insert_with_values(visual_list_store,
+			gtk_list_store_insert_with_values(visual_list_store, NULL, -1,
 				0, cfg.accelerated,
 				1, cfg.color_type & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
 				2, cfg.color_bpp,

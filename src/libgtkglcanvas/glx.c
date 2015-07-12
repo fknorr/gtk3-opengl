@@ -314,6 +314,10 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
     if (native->dpy) {
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
+
+        if (GLXEW_MESA_release_buffers) {
+            glXReleaseBuffersMESA(native->dpy, native->win);
+        }
     }
 }
 
