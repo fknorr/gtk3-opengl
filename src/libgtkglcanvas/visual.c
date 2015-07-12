@@ -1,10 +1,5 @@
 #include "visual.h"
-
-
-#define PREF GTK_GL_PREFERABLY
-#define EXACT GTK_GL_EXACTLY
-#define MOST GTK_GL_AT_MOST
-#define LEAST GTK_GL_AT_LEAST
+#include <assert.h>
 
 
 static gboolean
@@ -19,7 +14,7 @@ suits_range(int value1, int value2, GtkGLRestraint restr) {
 
 
 static gboolean
-suits_bool(int value1, int value2, GtkGLRestraint restr {
+suits_bool(int value1, int value2, GtkGLRestraint restr) {
     switch (restr) {
         case GTK_GL_PREFERABLY: return TRUE;
         case GTK_GL_EXACTLY: return !value1 == !value2;
@@ -46,6 +41,8 @@ is_suitable_configuration(const GtkGLFramebufferConfig *config,
         switch (attrib) {
             TEST_CASE(ACCELERATED, suits_bool, config->accelerated)
             TEST_CASE(COLOR_TYPE, suits_bool, config->color_type & value)
+            TEST_CASE(FB_LEVEL, suits_range, config->fb_level)
+            TEST_CASE(COLOR_BPP, suits_range, config->color_bpp)
             TEST_CASE(DOUBLE_BUFFERED, suits_bool, config->double_buffered)
             TEST_CASE(STEREO_BUFFERED, suits_bool, config->stereo_buffered)
             TEST_CASE(AUX_BUFFERS, suits_range, config->aux_buffers)
@@ -71,6 +68,8 @@ is_suitable_configuration(const GtkGLFramebufferConfig *config,
 #undef TEST_CASE
         attrib_list += 3;
     }
+
+    return TRUE;
 }
 
 
@@ -83,36 +82,63 @@ compare_configurations(const GtkGLFramebufferConfig *lhs,
 
 
 static gboolean
-dump_visuals(GtkGLFramebufferConfig *config, GtkGLVisual vis,
-        GtkGLVisual **array_pptr) {
-    *(*array_pptr)++ = vis;
+dump_visuals(GtkGLFramebufferConfig *config, GtkGLVisual *visual,
+        GtkGLVisual ***array_pptr) {
+    *(*array_pptr)++ = visual;
     return FALSE;
 }
 
 
-GtkGLVisual *
-gtk_gl_choose_visuals(const int *attrib_list, size_t *out_count) {
-    assert(attrib_list);
-    assert(out_count);
+GtkGLVisualList *
+gtk_gl_visual_list_new(gboolean is_owner, size_t count) {
+    GtkGLVisualList *list = g_malloc(sizeof *list);
+    list->is_owner = is_owner;
+    list->count = count;
+    list->entries = g_malloc0(sizeof(GtkGLVisual*) * count);
+    return list;
+}
 
-    size_t n_visuals;
-    GtkGLVisual *visuals = gtk_gl_enumerate_visuals(&n_visuals);
-    GTree *suitable_configs = g_tree_new_full(
-            (GCompareFunc) compare_configurations, attrib_list, g_free, NULL);
-    for (size_t i = 0; i < n_visuals; ++i) {
+
+GtkGLVisualList *
+gtk_gl_choose_visuals(const GtkGLVisualList *pool, const int *attrib_list) {
+    GTree *suitable_configs;
+    GtkGLVisualList *list;
+    GtkGLVisual **list_ptr;
+    size_t i;
+
+    assert(pool);
+    assert(attrib_list);
+
+    suitable_configs = g_tree_new_full(
+            (GCompareDataFunc) compare_configurations, (void*) attrib_list,
+            g_free, NULL);
+    for (i = 0; i < pool->count; ++i) {
         GtkGLFramebufferConfig *config = g_malloc(sizeof *config);
-        gtk_gl_describe_visual(visuals[i], config);
+        gtk_gl_describe_visual(pool->entries[i], config);
         if (is_suitable_configuration(config, attrib_list)) {
-            g_tree_insert(config, visuals[i]);
+            g_tree_insert(suitable_configs, config, pool->entries[i]);
         }
     }
-    g_free(visuals);
 
-    *out_count = g_tree_nnodes(suitable_configs);
-    GtkGLVisual *array = g_malloc(*out_count * sizeof *array),
-                *array_ptr = array;
-    g_tree_foreach(suitable_configs, (GTraverseFunc) dump_visuals, &array_ptr);
+    list = gtk_gl_visual_list_new(FALSE, g_tree_nnodes(suitable_configs));
+    list_ptr = list->entries;
+    g_tree_foreach(suitable_configs, (GTraverseFunc) dump_visuals, &list_ptr);
     g_tree_unref(suitable_configs);
 
-    return array;
+    return list;
+}
+
+
+void
+gtk_gl_visual_list_free(GtkGLVisualList *list) {
+    if (!list) return;
+
+    if (list->is_owner) {
+        size_t i;
+        for (i = 0; i < list->count; ++i) {
+            gtk_gl_visual_free(list->entries[i]);
+        }
+    }
+    g_free(list->entries);
+    g_free(list);
 }

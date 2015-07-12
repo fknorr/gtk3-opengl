@@ -28,7 +28,12 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 
-PKG_CHECK_MODULES([GTK], [gtk+-3.0], [], [AC_MSG_ERROR([Missing dependencies])])
+PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],
+    [AC_MSG_ERROR([Missing dependency: GTK+3])])
+PKG_CHECK_MODULES([OpenGL], [gl], [],
+    [AC_MSG_ERROR([Missing dependency: libGL])])
+PKG_CHECK_MODULES([GLEW], [glew], [],
+    [AC_MSG_ERROR([Missing dependency: libGLEW])])
 
 PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
     [have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`],

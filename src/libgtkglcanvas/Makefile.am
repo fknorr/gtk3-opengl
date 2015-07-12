@@ -29,11 +29,12 @@ platform_libs = $(X11_LIBS) $(GL_LIBS)
 endif
 
 __top_builddir__libgtkglcanvas_la_SOURCES = \
+	visual.c \
 	canvas.c \
 	$(platform_sources)
 
 gtkgldir = $(includedir)/gtkgl
-gtkgl_HEADERS = canvas.h attributes.h
+gtkgl_HEADERS = canvas.h visual.h
 
 if HAVE_GLADEUI
 gladedir = $(GLADEUI_CATDIR)
@@ -47,6 +48,14 @@ pkgconfigdir = $(PKG_CONFIG_DIR)
 pkgconfig_DATA = gtkglcanvas.pc
 
 __top_builddir__libgtkglcanvas_la_CFLAGS = \
-	$(GTK_CFLAGS) $(platform_def) $(platform_cflags)
+	$(GTK_CFLAGS) \
+	$(OpenGL_CFLAGS) \
+	$(GLEW_CFLAGS) \
+	$(platform_def) \
+	$(platform_cflags)
+
 __top_builddir__libgtkglcanvas_la_LIBADD = \
-	$(GTK_LIBS) $(platform_libs)
+	$(GTK_LIBS) \
+	$(OpenGL_LIBS) \
+	$(GLEW_LIBS) \
+	$(platform_libs)

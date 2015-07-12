@@ -120,15 +120,12 @@ gtk_gl_canvas_class_init(GtkGLCanvasClass *klass) {
 }
 
 
-static void gtk_gl_canvas_create_window(GtkWidget *wid,
-        const GtkGLAttributes *attrs);
+static void gtk_gl_canvas_create_window(GtkWidget *wid);
 
 void
 gtk_gl_canvas_realize(GtkWidget *wid) {
     GtkGLCanvas *gtkgl = GTK_GL_CANVAS(wid);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(gtkgl);
-    priv->disp = gdk_display_get_default();
-	GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(gtkgl)->native;
     GdkWindowAttr attributes;
     GtkAllocation allocation;
     gint attributes_mask;
@@ -165,6 +162,8 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
     g_object_ref(wid);
 
     gtk_gl_canvas_send_configure(wid);
+
+    gtk_gl_canvas_native_realize(gtkgl);
 }
 
 
@@ -239,10 +238,7 @@ gtk_gl_canvas_size_allocate(GtkWidget *wid, GtkAllocation *allocation) {
 
 GtkWidget*
 gtk_gl_canvas_new(void) {
-    GtkGLCanvas* canvas = g_object_new(GTK_GL_TYPE_CANVAS, NULL);
-    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-
-	return GTK_WIDGET(canvas);
+    return GTK_WIDGET(g_object_new(GTK_GL_TYPE_CANVAS, NULL));
 }
 
 
@@ -266,20 +262,22 @@ gtk_gl_canvas_after_create_context(GtkGLCanvas *canvas, gboolean success) {
 
 
 gboolean
-gtk_gl_canvas_create_context(GtkGLCanvas *canvas, GtkGLVisual vis) {
+gtk_gl_canvas_create_context(GtkGLCanvas *canvas, GtkGLVisual *visual) {
+    gboolean success;
     gtk_gl_canvas_before_create_context(canvas);
-	success = gtk_gl_canvas_native_create_context(canvas, vis);
+	success = gtk_gl_canvas_native_create_context(canvas, visual);
     gtk_gl_canvas_after_create_context(canvas, success);
 	return success;
 }
 
 
 gboolean
-gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
-       GtkGLVisual vis, unsigned ver_major, unsigned ver_minor,
+gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
+       GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
        GtkGLProfile profile) {
+    gboolean success;
     gtk_gl_canvas_before_create_context(canvas);
-    success = gtk_gl_canvas_native_create_context_with_version(canvas, vis,
+    success = gtk_gl_canvas_native_create_context_with_version(canvas, visual,
             ver_major, ver_minor, profile);
     gtk_gl_canvas_after_create_context(canvas, success);
     return success;

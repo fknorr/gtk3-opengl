@@ -101,6 +101,9 @@ GType gtk_gl_canvas_get_type(void);
 GtkWidget *gtk_gl_canvas_new(void);
 
 
+GtkGLVisualList *gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas);
+
+
 /**
  * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
  * current to the calling thread.
@@ -109,11 +112,11 @@ GtkWidget *gtk_gl_canvas_new(void);
  * returns the error message.
  *
  * @param canvas The canvas
- * @param vis The visual to create the context for
+ * @param visual The visual to create the context for
  * @return Whether context creation was successful
  */
 gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual vis);
+        GtkGLVisual *visual);
 
 
 /**
@@ -125,14 +128,14 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
  * returns the error message.
  *
  * @param canvas The canvas
- * @param vis The visual to create the context for
+ * @param visual The visual to create the context for
  * @param ver_major The desired GL major version
  * @param ver_minor The desired GL minor version
  * @param profile The desired GL profile
  * @return Whether context creation was successful
  */
 gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
-        GtkGLVisual vis, unsigned ver_major, unsigned ver_minor,
+        GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
         GtkGLProfile profile);
 
 /**

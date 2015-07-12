@@ -46,10 +46,8 @@
  * SOFTWARE.
  **/
 
-
-#include "canvas.h"
-#include "canvas_impl.h"
 #include <stdlib.h>
+#include <assert.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -60,93 +58,183 @@
 
 #include <X11/extensions/xf86vmode.h>
 
-#include <GL/glx.h>
+#include <GL/glxew.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <glib-object.h>
 
+#include "visual.h"
+#include "canvas.h"
+#include "canvas_impl.h"
+
+
+struct _GtkGLVisual {
+    Display *dpy;
+    GLXFBConfig cfg;
+};
+
+
+static GtkGLVisual *
+gtk_gl_visual_new(Display *dpy, GLXFBConfig cfg) {
+    GtkGLVisual visual = { dpy, cfg };
+    return g_memdup(&visual, sizeof visual);
+}
+
+
+void
+gtk_gl_visual_free(GtkGLVisual *visual) {
+    g_free(visual);
+}
+
 
 struct _GtkGLCanvas_NativePriv {
-    Display *xdis;
-    Window xwin;
+    Display *dpy;
+    int screen;
+    Window win;
     GLXContext glc;
 };
 
 
 GtkGLCanvas_NativePriv*
 gtk_gl_canvas_native_new() {
-	GtkGLCanvas_NativePriv *native = g_malloc(sizeof(GtkGLCanvas_NativePriv));
-	native->glc = NULL;
-	native->xwin = 0;
-    native->xdis = NULL;
-	return native;
+	return g_malloc0(sizeof(GtkGLCanvas_NativePriv));
+}
+
+
+void
+gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
+    native->win = gdk_x11_window_get_xid(priv->win);
+	if (!native->win) g_critical("Unable to get X11 window for canvas");
+
+    native->dpy = gdk_x11_display_get_xdisplay(gdk_window_get_display(
+            priv->win));
+	if (!native->dpy) g_critical("Unable to get X11 display");
+
+    native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
+            priv->win));
+    if (!native->screen) g_critical("Unable to get X11 screen");
+}
+
+
+GtkGLVisualList *
+gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
+    int fbconfig_count;
+    GLXFBConfig *fbconfigs;
+    GtkGLVisualList *list;
+    size_t i;
+
+    assert(native->dpy);
+
+    fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
+    list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
+    for (i = 0; i < list->count; ++i) {
+        list->entries[i] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
+    }
+    return list;
+}
+
+
+void
+gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
+    int value;
+
+#define QUERY(attr) \
+    (glXGetFBConfigAttrib(visual->dpy, visual->cfg, GLX_##attr, &value), value)
+
+    out->accelerated = TRUE;
+
+    QUERY(RENDER_TYPE);
+    out->color_type = (
+            (value & GLX_RGBA_BIT ? GTK_GL_COLOR_RGBA : 0)
+            | (value & GLX_COLOR_INDEX_BIT ? GTK_GL_COLOR_INDEXED : 0));
+
+    out->color_bpp = QUERY(BUFFER_SIZE);
+    out->fb_level = QUERY(LEVEL);
+    out->double_buffered = QUERY(DOUBLEBUFFER);
+    out->stereo_buffered = QUERY(STEREO);
+    out->aux_buffers = QUERY(AUX_BUFFERS);
+    out->red_color_bpp = QUERY(RED_SIZE);
+    out->green_color_bpp = QUERY(GREEN_SIZE);
+    out->blue_color_bpp = QUERY(BLUE_SIZE);
+    out->alpha_color_bpp = QUERY(ALPHA_SIZE);
+    out->depth_bpp = QUERY(DEPTH_SIZE);
+    out->stencil_bpp = QUERY(STENCIL_SIZE);
+    out->red_accum_bpp = QUERY(ACCUM_RED_SIZE);
+    out->green_accum_bpp = QUERY(ACCUM_GREEN_SIZE);
+    out->blue_accum_bpp = QUERY(ACCUM_BLUE_SIZE);
+    out->alpha_accum_bpp = QUERY(ACCUM_ALPHA_SIZE);
+
+    QUERY(TRANSPARENT_TYPE);
+    out->transparent_type
+            = value == GLX_NONE ? GTK_GL_TRANSPARENT_NONE
+            : value == GLX_TRANSPARENT_RGB ? GTK_GL_TRANSPARENT_INDEX
+            : GTK_GL_TRANSPARENT_INDEX;
+
+    out->transparent_index = QUERY(TRANSPARENT_INDEX_VALUE);
+    out->transparent_red = QUERY(TRANSPARENT_RED_VALUE);
+    out->transparent_green = QUERY(TRANSPARENT_GREEN_VALUE);
+    out->transparent_blue = QUERY(TRANSPARENT_BLUE_VALUE);
+    out->transparent_alpha = QUERY(TRANSPARENT_ALPHA_VALUE);
+
+    if (GLXEW_VERSION_1_4) {
+        out->sample_buffers = QUERY(SAMPLE_BUFFERS);
+        out->samples_per_pixel = QUERY(SAMPLES);
+    } else if (GLXEW_ARB_multisample) {
+        out->sample_buffers = QUERY(SAMPLE_BUFFERS_ARB);
+        out->samples_per_pixel = QUERY(SAMPLES_ARB);
+    } else {
+        out->sample_buffers = out->samples_per_pixel = 0;
+    }
+
+#undef QUERY
 }
 
 
 gboolean
 gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
-        const GtkGLAttributes *attrs) {
+        GtkGLVisual *visual) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
+
     XVisualInfo *vi;
+    int attrib;
 
-    // GLX expects a key-value-array for its parameters.
-    int att[] = {
-            GLX_RGBA, GLX_DEPTH_SIZE, attrs->depth_buffer_bits,
-            GLX_SAMPLES, (int) attrs->num_samples,
-            None, None, None, None },
-        fallback_att[] = {
-            GLX_RGBA, None, None };
-	int *att_ptr = att+5;
+    assert(visual);
 
-	if (attrs->flags & GTK_GL_DOUBLE_BUFFERED) {
-		*att_ptr++ = GLX_DOUBLEBUFFER;
-        fallback_att[1] = GLX_DOUBLEBUFFER;
-    }
-
-	if (attrs->flags & GTK_GL_STEREO) {
-		*att_ptr++ = GLX_STEREO;
-    }
-	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) {
-		*att_ptr++ = GLX_SAMPLE_BUFFERS;
-    }
-
-    native->xwin = gdk_x11_window_get_xid(priv->win);
-	if (!native->xwin)
-	{
-		priv->error_msg = g_strdup("Unable to get X11 window for canvas");
-		return FALSE;
-	}
-
-    native->xdis = gdk_x11_display_get_xdisplay(priv->disp);
-	if (!native->xdis)
-	{
-		priv->error_msg = g_strdup("Unable to get X display");
-		return FALSE;
-	}
-
-    vi = glXChooseVisual(native->xdis, 0, att);
+    vi = glXGetVisualFromFBConfig(visual->dpy, visual->cfg);
     if (!vi) {
-        g_warning("GtkGLCanvas: Falling back to default X visual");
-        vi = glXChooseVisual(native->xdis, 0, fallback_att);
+        g_error("Unable to get X visual form GtkGLVisual");
+        return FALSE;
     }
 
-	if (!vi) {
-		priv->error_msg = g_strdup("Unable to get X visual");
-		return FALSE;
-	}
-
-    native->glc = glXCreateContext(native->xdis, vi, 0, GL_TRUE);
-    XFree(vi);
-
+    native->glc = glXCreateContext(native->dpy, vi, NULL, GL_TRUE);
 	if (!native->glc)
 	{
-		priv->error_msg = g_strdup("Unable to create GLX context");
+		g_error("Unable to create GLX context");
 		return FALSE;
 	}
 
-	priv->effective_depth = vi->depth;
+    glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
+            &attrib);
+    priv->double_buffered = (unsigned) attrib;
+    priv->effective_depth = vi->depth;
+
+    XFree(vi);
 	return TRUE;
+}
+
+
+gboolean
+gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
+        GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        GtkGLProfile profile) {
+    return FALSE;
 }
 
 
@@ -155,11 +243,9 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 
-    if (native->xdis) {
-		glXDestroyContext(native->xdis, native->glc);
+    if (native->dpy) {
+		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
-		native->xwin = 0;
-        native->xdis = NULL;
     }
 }
 
@@ -168,7 +254,7 @@ void
 gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    glXMakeCurrent(native->xdis, native->xwin, native->glc);
+    glXMakeCurrent(native->dpy, native->win, native->glc);
 }
 
 
@@ -176,19 +262,5 @@ void
 gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    glXSwapBuffers(native->xdis, native->xwin);
-}
-
-
-GtkGLSupport
-gtk_gl_query_feature_support(GtkGLFeature feature) {
-    switch (feature) {
-        case GTK_GL_DOUBLE_BUFFERED:
-        case GTK_GL_STEREO:
-        case GTK_GL_SAMPLE_BUFFERS:
-            return GTK_GL_FULLY_SUPPORTED;
-
-        default:
-            return GTK_GL_UNSUPPORTED;
-    }
+    glXSwapBuffers(native->dpy, native->win);
 }

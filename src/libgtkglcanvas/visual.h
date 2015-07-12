@@ -26,30 +26,32 @@
 G_BEGIN_DECLS
 
 
-
-typedef enum _GtkGLState {
-
-} GtkGLState;
-
-
 typedef enum _GtkGLColorType {
-    GTK_GL_COLOR_RGBA,
-    GTK_GL_COLOR_INDEXED
+    GTK_GL_COLOR_RGBA = 1,
+    GTK_GL_COLOR_INDEXED = 2
 } GtkGLColorType;
 
 
 typedef enum _GtkGLTransparentType {
+    GTK_GL_TRANSPARENT_NONE,
     GTK_GL_TRANSPARENT_RGB,
     GTK_GL_TRANSPARENT_INDEX
 } GtkGLTransparentType;
 
 
-typedef void *GtkGLConfigID;
+typedef struct _GtkGLVisual GtkGLVisual;
+
+
+typedef struct _GtkGLVisualList {
+    gboolean is_owner;
+    size_t count;
+    GtkGLVisual **entries;
+} GtkGLVisualList;
 
 
 typedef struct _GtkGLFramebufferConfig {
     gboolean accelerated;
-    GtkGLColorType color_type;
+    unsigned color_type;
     unsigned color_bpp;
     int fb_level;
     gboolean double_buffered;
@@ -66,10 +68,13 @@ typedef struct _GtkGLFramebufferConfig {
     unsigned blue_accum_bpp;
     unsigned alpha_accum_bpp;
     GtkGLTransparentType transparent_type;
+    unsigned transparent_index;
     unsigned transparent_red;
     unsigned transparent_green;
     unsigned transparent_blue;
     unsigned transparent_alpha;
+    unsigned sample_buffers;
+    unsigned samples_per_pixel;
 } GtkGLFramebufferConfig;
 
 
@@ -107,11 +112,17 @@ typedef enum _GtkGLRestraint {
 } GtkGLRestraint;
 
 
-GtkGLVisual *gtk_gl_enumerate_visuals(size_t *out_count);
+GtkGLVisualList *gtk_gl_choose_visuals(const GtkGLVisualList *pool,
+        const int *attrib_list);
 
-void gtk_gl_describe_visual(GtkGLConfigId id, GtkGLFramebufferConfig *out);
+void gtk_gl_visual_free(GtkGLVisual *vis);
 
-GtkGLVisual *gtk_gl_choose_visuals(const int *attrib_list, size_t *out_count);
+GtkGLVisualList *gtk_gl_visual_list_new(gboolean is_owner, size_t count);
+
+void gtk_gl_visual_list_free(GtkGLVisualList *visuals);
+
+void gtk_gl_describe_visual(const GtkGLVisual *visual,
+        GtkGLFramebufferConfig *out);
 
 
 G_END_DECLS
