@@ -2,7 +2,6 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <requires lib="gtkgl" version="0.0"/>
   <object class="GtkListStore" id="profile-list-store">
     <columns>
       <!-- column-name text -->
@@ -197,7 +196,7 @@ GL context</property>
   </object>
   <object class="GtkDialog" id="visual-chooser">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Available visuals</property>
+    <property name="title" translatable="yes">OpenGL Context Configurator</property>
     <property name="default_width">800</property>
     <property name="default_height">600</property>
     <property name="type_hint">dialog</property>
@@ -205,6 +204,8 @@ GL context</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox">
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
@@ -229,348 +230,375 @@ GL context</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="visuals-window">
+          <object class="GtkFrame" id="visuals-frame">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
+            <property name="can_focus">False</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">none</property>
             <child>
-              <object class="GtkTreeView" id="visual-list">
+              <object class="GtkAlignment" id="visuals-alignment">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="model">visual-list-store</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection"/>
-                </child>
+                <property name="can_focus">False</property>
+                <property name="top_padding">2</property>
+                <property name="bottom_padding">7</property>
+                <property name="left_padding">7</property>
+                <property name="right_padding">7</property>
                 <child>
-                  <object class="GtkTreeViewColumn" id="accelerated-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Accelerated</property>
-                    <property name="alignment">0.40999999642372131</property>
+                  <object class="GtkScrolledWindow" id="visuals-window">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkCellRendererText" id="accelerated-renderer"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="color-type-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Color Type</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="color-type-renderer"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="color-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Color Buffer Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="color-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">2</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="fb-level-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">FB Level</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="fb-level-renderer"/>
-                      <attributes>
-                        <attribute name="text">3</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="double-buffered-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Double Buffered</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="double-buffered-renderer">
-                        <property name="sensitive">False</property>
+                      <object class="GtkTreeView" id="visual-list">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">visual-list-store</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="treeview-selection"/>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="accelerated-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Accelerated</property>
+                            <property name="alignment">0.40999999642372131</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="accelerated-renderer"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="color-type-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Color Type</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="color-type-renderer"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="color-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Color Buffer Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="color-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="fb-level-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">FB Level</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="fb-level-renderer"/>
+                              <attributes>
+                                <attribute name="text">3</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="double-buffered-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Double Buffered</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="double-buffered-renderer">
+                                <property name="sensitive">False</property>
+                              </object>
+                              <attributes>
+                                <attribute name="text">4</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="stereo-buffered-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Stereo Buffer</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="stereo-buffered-renderer"/>
+                              <attributes>
+                                <attribute name="text">5</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="aux-buffers-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Aux Buffers</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="aux-buffers-renderer"/>
+                              <attributes>
+                                <attribute name="text">6</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="red-color-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Red Color Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="red-color-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">7</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="green-color-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Green Color Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="green-color-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">8</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="blue-color-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Blue Color Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="blue-color-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">9</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="alpha-color-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Alpha Color Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="alpha-color-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">10</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="depth-bpp-column">
+                            <property name="title" translatable="yes">Depth Buffer Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="depth-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">11</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="stencil-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Stencil Buffer Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="stencil-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">12</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="red-accum-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Red Accum. Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="red-accum-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">13</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="green-accum-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Green Accum. Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="green-accum-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">14</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="blue-accum-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Blue Accum. Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="blue-accum-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">15</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="alpha-accum-bpp-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Alpha Accum. Bits</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="alpha-accum-bpp-renderer"/>
+                              <attributes>
+                                <attribute name="text">16</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-type-columm">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparency</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-type-renderer"/>
+                              <attributes>
+                                <attribute name="text">17</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-index-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparent Index</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-index-renderer"/>
+                              <attributes>
+                                <attribute name="text">18</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-red-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparent Red Value</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-red-renderer"/>
+                              <attributes>
+                                <attribute name="text">19</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-green-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparent Green Value</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-green-renderer"/>
+                              <attributes>
+                                <attribute name="text">20</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-blue-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparent Blue Value</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-blue-renderer"/>
+                              <attributes>
+                                <attribute name="text">21</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="transparent-alpha-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Transparent Alpha Value</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="transparent-alpha-renderer"/>
+                              <attributes>
+                                <attribute name="text">22</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="samble-buffers-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Sample Buffers</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="sample-buffers-renderer"/>
+                              <attributes>
+                                <attribute name="text">23</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="samples-per-pixel-column">
+                            <property name="resizable">True</property>
+                            <property name="fixed_width">40</property>
+                            <property name="title" translatable="yes">Samples Per Pixel</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="samples-per-pixel-renderer"/>
+                              <attributes>
+                                <attribute name="text">24</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
                       </object>
-                      <attributes>
-                        <attribute name="text">4</attribute>
-                      </attributes>
                     </child>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="stereo-buffered-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Stereo Buffer</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="stereo-buffered-renderer"/>
-                      <attributes>
-                        <attribute name="text">5</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="aux-buffers-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Aux Buffers</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="aux-buffers-renderer"/>
-                      <attributes>
-                        <attribute name="text">6</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="red-color-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Red Color Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="red-color-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">7</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="green-color-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Green Color Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="green-color-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">8</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="blue-color-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Blue Color Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="blue-color-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">9</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="alpha-color-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Alpha Color Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="alpha-color-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">10</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="depth-bpp-column">
-                    <property name="title" translatable="yes">Depth Buffer Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="depth-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">11</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="stencil-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Stencil Buffer Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="stencil-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">12</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="red-accum-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Red Accum. Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="red-accum-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">13</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="green-accum-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Green Accum. Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="green-accum-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">14</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="blue-accum-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Blue Accum. Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="blue-accum-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">15</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="alpha-accum-bpp-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Alpha Accum. Bits</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="alpha-accum-bpp-renderer"/>
-                      <attributes>
-                        <attribute name="text">16</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-type-columm">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparency</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-type-renderer"/>
-                      <attributes>
-                        <attribute name="text">17</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-index-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparent Index</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-index-renderer"/>
-                      <attributes>
-                        <attribute name="text">18</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-red-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparent Red Value</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-red-renderer"/>
-                      <attributes>
-                        <attribute name="text">19</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-green-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparent Green Value</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-green-renderer"/>
-                      <attributes>
-                        <attribute name="text">20</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-blue-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparent Blue Value</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-blue-renderer"/>
-                      <attributes>
-                        <attribute name="text">21</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="transparent-alpha-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Transparent Alpha Value</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="transparent-alpha-renderer"/>
-                      <attributes>
-                        <attribute name="text">22</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="samble-buffers-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Sample Buffers</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="sample-buffers-renderer"/>
-                      <attributes>
-                        <attribute name="text">23</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="samples-per-pixel-column">
-                    <property name="resizable">True</property>
-                    <property name="fixed_width">40</property>
-                    <property name="title" translatable="yes">Samples Per Pixel</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="samples-per-pixel-renderer"/>
-                      <attributes>
-                        <attribute name="text">24</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel" id="visuals-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xpad">2</property>
+                <property name="ypad">2</property>
+                <property name="label" translatable="yes">Available Visuals</property>
               </object>
             </child>
           </object>
@@ -581,79 +609,107 @@ GL context</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="gl-version-box">
+          <object class="GtkFrame" id="version-frame">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">none</property>
             <child>
-              <object class="GtkLabel" id="major-label">
+              <object class="GtkAlignment" id="version-alignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">OpenGL Version Major</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="padding">7</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSpinButton" id="major-spinbutton">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">ver-major</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="minor-label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Minor</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="padding">16</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSpinButton" id="minor-spinbutton">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">ver-minor</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkComboBox" id="profile-combobox">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="model">profile-list-store</property>
-                <property name="active">0</property>
-                <property name="active_id">0</property>
+                <property name="top_padding">2</property>
+                <property name="bottom_padding">7</property>
+                <property name="left_padding">7</property>
+                <property name="right_padding">7</property>
                 <child>
-                  <object class="GtkCellRendererText" id="profile-name-renderer"/>
-                  <attributes>
-                    <attribute name="text">0</attribute>
-                  </attributes>
+                  <object class="GtkBox" id="version-box">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="major-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Major</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="padding">7</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="major-spinbutton">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="adjustment">ver-major</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="minor-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Minor</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="padding">16</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="minor-spinbutton">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="adjustment">ver-minor</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="profile-combobox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">profile-list-store</property>
+                        <property name="active">0</property>
+                        <property name="active_id">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="profile-name-renderer"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="padding">14</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                  </object>
                 </child>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="padding">14</property>
-                <property name="position">4</property>
-              </packing>
+            </child>
+            <child type="label">
+              <object class="GtkLabel" id="version-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xpad">2</property>
+                <property name="ypad">2</property>
+                <property name="label" translatable="yes">OpenGL Version</property>
+                <property name="angle">0.050000000000000003</property>
+              </object>
             </child>
           </object>
           <packing>
