@@ -63,6 +63,7 @@ static GtkWidget *window;
 static GtkListStore *visual_list_store;
 static GtkDialog *chooser;
 static GtkGLCanvas *canvas;
+static GtkLabel *info_label;
 static GtkTreeSelection *visual_selection;
 
 
@@ -161,6 +162,22 @@ example_draw_gl(void) {
 }
 
 
+static void
+update_context_info(void) {
+	if (gtk_gl_canvas_has_context(canvas)) {
+		char *text = g_strdup_printf(
+				"Vendor: %s\nRenderer: %s\nOpenGL Version:%s",
+				(const char*) glGetString(GL_VENDOR),
+				(const char*) glGetString(GL_RENDERER),
+				(const char*) glGetString(GL_VERSION));
+		gtk_label_set_text(info_label, text);
+		g_free(text);
+	} else {
+		gtk_label_set_text(info_label, "No context present");
+	}
+}
+
+
 gboolean
 example_create_context(void) {
 	if (gtk_gl_canvas_has_context(canvas)) {
@@ -221,6 +238,9 @@ example_create_context(void) {
 		}
 		gtk_gl_visual_list_free(visuals);
     }
+
+	update_context_info();
+
 	return TRUE;
 }
 
@@ -233,6 +253,9 @@ example_destroy_context(void) {
 		running = FALSE;
 		gtk_gl_canvas_destroy_context(canvas);
 	}
+
+	update_context_info();
+
 	return TRUE;
 }
 
@@ -260,6 +283,7 @@ main(int argc, char *argv[]) {
 	gtk_builder_connect_signals(builder, NULL);
 
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
+	info_label = GTK_LABEL(gtk_builder_get_object(builder, "info-label"));
 	chooser = GTK_DIALOG(gtk_builder_get_object(builder, "visual-chooser"));
 	visual_list_store = GTK_LIST_STORE(gtk_builder_get_object(builder,
 			"visual-list-store"));

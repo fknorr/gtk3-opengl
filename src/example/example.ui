@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtkgl" version="0.0"/>
   <object class="GtkListStore" id="profile-list-store">
     <columns>
       <!-- column-name text -->
@@ -85,21 +86,121 @@
   <object class="GtkWindow" id="window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">GtkGLCanvas Example</property>
-    <property name="default_width">400</property>
-    <property name="default_height">300</property>
+    <property name="default_width">600</property>
+    <property name="default_height">400</property>
     <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
-      <object class="GtkBox" id="box_window">
+      <object class="GtkBox" id="horizontal-box">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <child>
-          <object class="GtkGLCanvas" id="canvas">
+          <object class="GtkBox" id="vertical-box">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="double_buffered">False</property>
-            <signal name="destroy" handler="example_stop_animation" swapped="no"/>
-            <signal name="draw" handler="example_draw_gl" swapped="no"/>
+            <property name="can_focus">False</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkGLCanvas" id="canvas">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="double_buffered">False</property>
+                <signal name="destroy" handler="example_stop_animation" swapped="no"/>
+                <signal name="draw" handler="example_draw_gl" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="button-box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">4</property>
+                <property name="margin_top">3</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">3</property>
+                <child>
+                  <object class="GtkButton" id="create-butto">
+                    <property name="label" translatable="yes">Create GL context</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="example_create_context" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="destroy-button">
+                    <property name="label" translatable="yes">Destroy GL context</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="example_destroy_context" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="check-button">
+                    <property name="label" translatable="yes">Check for active
+GL context</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="example_check_context" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="start-anim-button">
+                    <property name="label" translatable="yes">Start animation</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="example_start_animation" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="stop-anim-button">
+                    <property name="label" translatable="yes">Stop animation</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="yalign">0.54000002145767212</property>
+                    <signal name="clicked" handler="example_stop_animation" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -108,82 +209,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="box_buttons">
+          <object class="GtkLabel" id="info-label">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkButton" id="btn_create">
-                <property name="label" translatable="yes">Create GL context</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="example_create_context" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_destroy">
-                <property name="label" translatable="yes">Destroy GL context</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="example_destroy_context" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_check">
-                <property name="label" translatable="yes">Check for active
-GL context</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="example_check_context" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_startanim">
-                <property name="label" translatable="yes">Start animation</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="example_start_animation" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="btn_stopanim">
-                <property name="label" translatable="yes">Stop animation</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="yalign">0.54000002145767212</property>
-                <signal name="clicked" handler="example_stop_animation" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
+            <property name="xalign">0</property>
+            <property name="xpad">3</property>
+            <property name="ypad">2</property>
+            <property name="label" translatable="yes">No context present</property>
           </object>
           <packing>
             <property name="expand">False</property>
