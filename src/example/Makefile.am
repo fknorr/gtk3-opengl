@@ -20,11 +20,16 @@ __top_builddir__example_SOURCES = \
 	main.c
 
 __top_builddir__example_LDADD = \
-	$(top_builddir)/libgtkglcanvas.la -lm -lGL \
-	@GTK_LIBS@
+	$(top_builddir)/libgtkglcanvas.la \
+	-lm \
+	$(GTK_LIBS) \
+	$(OpenGL_LIBS) \
+	$(GLEW_LIBS)
 
 __top_builddir__example_CPPFLAGS = \
-    @GTK_CFLAGS@
+	$(OpenGL_CFLAGS) \
+	$(GLEW_CFLAGS) \
+    $(GTK_CFLAGS)
 
 if PLATFORM_WIN32
 __top_builddir__example_LDFLAGS = \

@@ -49,16 +49,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <X11/Xatom.h>
-#include <X11/keysym.h>
-
-#include <X11/extensions/xf86vmode.h>
-
 #include <GL/glxew.h>
+
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <glib-object.h>
@@ -66,6 +58,60 @@
 #include "visual.h"
 #include "canvas.h"
 #include "canvas_impl.h"
+
+
+
+static gboolean glxew_initialized = FALSE;
+
+
+static void
+init_glxew(Display *dpy, int screen) {
+    static int attr_sets[][3] = {
+            { GLX_RGBA, GLX_DOUBLEBUFFER, None },
+            { GLX_RGBA, None },
+            { GLX_DOUBLEBUFFER, None },
+            { None }
+        };
+
+    int erb, evb;
+    XVisualInfo *vi = NULL;
+    GLXContext cxt;
+    Window wnd;
+    size_t i;
+    gboolean dummy_created = FALSE;
+
+    if (glxew_initialized) return;
+
+    // Create dummy context to call glewInit() on
+    if (!glXQueryExtension(dpy, &erb, &evb)) goto end;
+
+    for (i = 0; i < 4; ++i) {
+        if ((vi = glXChooseVisual(dpy, screen, attr_sets[i]))) break;
+    }
+    if (!vi) goto end;
+
+    if (!(cxt = glXCreateContext(dpy, vi, None, True))) goto end_vi;
+    if (!(wnd = XCreateSimpleWindow(dpy, RootWindow(dpy, screen), 0, 0, 1, 1,
+            1, 0, 0))) goto end_cxt;
+    if (glXMakeCurrent(dpy, wnd, cxt)) {
+        dummy_created = TRUE;
+        glewExperimental = GL_TRUE;
+        if (glewInit() != GLEW_OK) {
+            g_error("Unable to initialize GLXEW");
+        } else {
+            glxew_initialized = TRUE;
+        }
+    }
+    XDestroyWindow(dpy, wnd);
+end_cxt:
+    glXDestroyContext(dpy, cxt);
+end_vi:
+    XFree(vi);
+end:
+    if (!dummy_created) {
+        g_error("Unable to create dummy context for GLXEW initialization");
+    }
+}
 
 
 struct _GtkGLVisual {
@@ -107,15 +153,20 @@ gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
     GtkGLCanvas_NativePriv *native = priv->native;
 
     native->win = gdk_x11_window_get_xid(priv->win);
-	if (!native->win) g_critical("Unable to get X11 window for canvas");
+	if (!native->win) {
+        g_critical("Unable to get X11 window for canvas");
+    }
 
     native->dpy = gdk_x11_display_get_xdisplay(gdk_window_get_display(
             priv->win));
-	if (!native->dpy) g_critical("Unable to get X11 display");
+	if (!native->dpy) {
+        g_critical("Unable to get X11 display");
+    }
 
     native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
             priv->win));
-    if (!native->screen) g_critical("Unable to get X11 screen");
+
+    init_glxew(native->dpy, native->screen);
 }
 
 
@@ -131,6 +182,10 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
     assert(native->dpy);
 
+    if (!glxew_initialized || !GLXEW_VERSION_1_3) {
+        return gtk_gl_visual_list_new(TRUE, 0);
+    }
+
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
     for (i = 0; i < list->count; ++i) {
@@ -143,6 +198,11 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 void
 gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     int value;
+
+    assert(visual);
+    assert(out);
+    assert(glxew_initialized);
+    assert(GLXEW_VERSION_1_3);
 
 #define QUERY(attr) \
     (glXGetFBConfigAttrib(visual->dpy, visual->cfg, GLX_##attr, &value), value)
@@ -206,6 +266,8 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
     int attrib;
 
     assert(visual);
+    assert(glxew_initialized);
+    assert(GLXEW_VERSION_1_3);
 
     vi = glXGetVisualFromFBConfig(visual->dpy, visual->cfg);
     if (!vi) {

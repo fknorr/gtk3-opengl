@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#include <gtkgl/visual.h>
 #include <gtkgl/canvas.h>
 #include <GL/gl.h>
 #include <math.h>
@@ -59,6 +60,8 @@
 
 static gboolean running = TRUE;
 static GtkWidget *window;
+static GtkListStore *visual_list_store;
+static GtkDialog *chooser;
 static GtkGLCanvas *canvas;
 
 
@@ -98,10 +101,10 @@ example_stop_animation(void) {
 
 gboolean
 example_click(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
-    char *msg;
-	asprintf(&msg, "Clicked at %.3fx%.3f with button %d\n",
+    char *msg = g_strdup_printf("Clicked at %.3fx%.3f with button %d\n",
         ev->button.x, ev->button.y, ev->button.button);
 	message_box(GTK_MESSAGE_INFO, msg);
+	g_free(msg);
     return TRUE;
 }
 
@@ -152,23 +155,59 @@ example_draw_gl(void) {
     glVertex2f(0.f, 0.8f);
     glEnd();
 
-    // this is also very important
-    gtk_gl_canvas_swap_buffers(canvas);
+    gtk_gl_canvas_display_frame(canvas);
     return TRUE;
 }
 
 
 gboolean
 example_create_context(void) {
-	GtkGLAttributes attrs = {
-        GTK_GL_DOUBLE_BUFFERED | GTK_GL_SAMPLE_BUFFERS, 4,
-		24, 24, 0
-    };
-
 	if (gtk_gl_canvas_has_context(canvas)) {
 		message_box(GTK_MESSAGE_ERROR, "Context exists already");
-    } else if (!gtk_gl_canvas_create_context(canvas, &attrs)) {
-		message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
+    } else {
+		GtkGLVisualList *visuals = gtk_gl_canvas_enumerate_visuals(canvas);
+		size_t i;
+
+		gtk_list_store_clear(visual_list_store);
+		for (i = 0; i < visuals->count; ++i) {
+			GtkGLFramebufferConfig cfg;
+			gtk_gl_describe_visual(visuals->entries[i], &cfg);
+			gtk_list_store_insert_with_values(visual_list_store,
+				0, !cfg.accelerated,
+				1, cfg.color_type & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
+				2, cfg.color_bpp,
+				3, cfg.fb_level,
+				4, cfg.double_buffered,
+				5, cfg.stereo_buffered,
+				6, cfg.aux_buffers,
+				7, cfg.red_color_bpp,
+				8, cfg.green_color_bpp,
+				9, cfg.blue_color_bpp,
+				10, cfg.alpha_color_bpp,
+				11, cfg.depth_bpp,
+				12, cfg.stencil_bpp,
+				13, cfg.red_accum_bpp,
+				14, cfg.green_accum_bpp,
+				15, cfg.blue_accum_bpp,
+				16, cfg.alpha_accum_bpp,
+				17, cfg.transparent_type == GTK_GL_TRANSPARENT_NONE ? "None"
+					: cfg.transparent_type == GTK_GL_TRANSPARENT_RGB ? "RGB"
+					: "Indexed",
+				18, cfg.transparent_index,
+				19, cfg.transparent_red,
+				20, cfg.transparent_green,
+				21, cfg.transparent_blue,
+				22, cfg.transparent_alpha,
+				23, cfg.sample_buffers,
+				24, cfg.samples_per_pixel,
+				-1);
+		}
+
+		gtk_dialog_run(chooser);
+/*
+		if (!gtk_gl_canvas_create_context(canvas, &attrs)) {
+			message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
+		}*/
     }
 	return TRUE;
 }
@@ -208,6 +247,9 @@ main(int argc, char *argv[]) {
 	gtk_builder_connect_signals(builder, NULL);
 
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
+	chooser = GTK_DIALOG(gtk_builder_get_object(builder, "visual-chooser"));
+	visual_list_store = GTK_LIST_STORE(gtk_builder_get_object(builder,
+			"visual-list-store"));
 	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
 
 	gtk_widget_show_all(window);
@@ -219,4 +261,3 @@ main(int argc, char *argv[]) {
     gtk_main();
     return 0;
 }
-

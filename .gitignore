@@ -20,3 +20,5 @@ callgrind.out.*
 m4/
 config.log
 ltmain.sh
+.atom-build.json
+.linter-clang-includes
