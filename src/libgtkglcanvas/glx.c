@@ -262,39 +262,49 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 }
 
 
-gboolean
-gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual *visual) {
-	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	GtkGLCanvas_NativePriv *native = priv->native;
-
-    XVisualInfo *vi;
-    int attrib;
-
+static void
+gtk_gl_canvas_native_before_create_context(GtkGLVisual *visual) {
     assert(visual);
     assert(glxew_initialized);
     assert(GLXEW_VERSION_1_3);
+}
 
+
+static void
+gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual *visual) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+    int attrib;
+
+    glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
+            &attrib);
+    priv->double_buffered = (unsigned) attrib;
+
+    if (glewInit() != GLEW_OK) {
+        g_warning("glewInit() after context creation failed");
+    }
+}
+
+
+gboolean
+gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual *visual) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+    XVisualInfo *vi;
+
+    gtk_gl_canvas_native_before_create_context(visual);
     vi = glXGetVisualFromFBConfig(visual->dpy, visual->cfg);
     if (!vi) {
         g_error("Unable to get X visual form GtkGLVisual");
         return FALSE;
     }
-
     native->glc = glXCreateContext(native->dpy, vi, NULL, GL_TRUE);
-	if (!native->glc)
-	{
-		g_error("Unable to create GLX context");
-		return FALSE;
-	}
-
-    glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
-            &attrib);
-    priv->double_buffered = (unsigned) attrib;
-    priv->effective_depth = vi->depth;
-
     XFree(vi);
-	return TRUE;
+
+    gtk_gl_canvas_native_after_create_context(canvas, visual);
+	return !!native->glc;
 }
 
 
@@ -302,7 +312,40 @@ gboolean
 gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
         GtkGLProfile profile) {
-    return FALSE;
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+    int attrib_list[] = {
+            GLX_CONTEXT_MAJOR_VERSION_ARB, ver_major,
+            GLX_CONTEXT_MINOR_VERSION_ARB, ver_minor,
+            GLX_CONTEXT_PROFILE_MASK_ARB, profile == GTK_GL_CORE_PROFILE
+                    ? GLX_CONTEXT_CORE_PROFILE_BIT_ARB
+                    : GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+            None
+        };
+
+    if (GLXEW_ARB_create_context) {
+        gtk_gl_canvas_native_before_create_context(visual);
+        native->glc = glXCreateContextAttribsARB(native->dpy, visual->cfg, NULL,
+                GL_TRUE, attrib_list);
+        gtk_gl_canvas_native_after_create_context(canvas, visual);
+        return !!native->glc;
+    } else if (ver_major < 3 || (ver_major == 3 && ver_minor == 0)) {
+        const char *cxt_version;
+        unsigned cxt_major, cxt_minor;
+
+        if (!gtk_gl_canvas_native_create_context(canvas, visual)) return FALSE;
+        cxt_version = (const char*) glGetString(GL_VERSION);
+        if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2
+                && (cxt_major > ver_major
+                    || (cxt_major == ver_major && cxt_minor >= ver_minor))) {
+            return TRUE;
+        } else {
+            gtk_gl_canvas_native_destroy_context(canvas);
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
 }
 
 
