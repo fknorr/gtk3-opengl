@@ -63,6 +63,7 @@ static GtkWidget *window;
 static GtkListStore *visual_list_store;
 static GtkDialog *chooser;
 static GtkGLCanvas *canvas;
+static GtkTreeSelection *visual_selection;
 
 
 static void
@@ -167,13 +168,14 @@ example_create_context(void) {
     } else {
 		GtkGLVisualList *visuals = gtk_gl_canvas_enumerate_visuals(canvas);
 		size_t i;
+		GtkTreeIter iter;
 
 		gtk_list_store_clear(visual_list_store);
 		for (i = 0; i < visuals->count; ++i) {
 			GtkGLFramebufferConfig cfg;
 			gtk_gl_describe_visual(visuals->entries[i], &cfg);
 			gtk_list_store_insert_with_values(visual_list_store,
-				0, !cfg.accelerated,
+				0, cfg.accelerated,
 				1, cfg.color_type & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
 				2, cfg.color_bpp,
 				3, cfg.fb_level,
@@ -204,10 +206,20 @@ example_create_context(void) {
 		}
 
 		gtk_dialog_run(chooser);
-/*
-		if (!gtk_gl_canvas_create_context(canvas, &attrs)) {
+		gtk_widget_hide(GTK_WIDGET(chooser));
+
+		i = 0;
+		if (gtk_tree_selection_get_selected(visual_selection, NULL, &iter)) {
+			char *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(
+					visual_list_store), &iter);
+			i = g_ascii_strtoll(path, NULL, 10);
+			g_free(path);
+		}
+
+		if (!gtk_gl_canvas_create_context(canvas, visuals->entries[i])) {
 			message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
-		}*/
+		}
+		gtk_gl_visual_list_free(visuals);
     }
 	return TRUE;
 }
@@ -230,6 +242,7 @@ example_check_context(void) {
 	const char *msg = gtk_gl_canvas_has_context(canvas)
 		? "I have a context" : "I don't have a context";
 	message_box(GTK_MESSAGE_INFO, msg);
+	return FALSE;
 }
 
 
@@ -251,6 +264,10 @@ main(int argc, char *argv[]) {
 	visual_list_store = GTK_LIST_STORE(gtk_builder_get_object(builder,
 			"visual-list-store"));
 	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
+	visual_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(
+			gtk_builder_get_object(builder, "visual-list")));
+
+	gtk_tree_selection_set_mode(visual_selection, GTK_SELECTION_SINGLE);
 
 	gtk_widget_show_all(window);
 	g_object_unref(builder);
