@@ -34,7 +34,9 @@ __top_builddir__libgtkglcanvas_la_SOURCES = \
 	$(platform_sources)
 
 gtkgldir = $(includedir)/gtkgl
-gtkgl_HEADERS = canvas.h visual.h
+gtkgl_HEADERS = \
+    $(top_srcdir)/include/gtkgl/canvas.h \
+    $(top_srcdir)/include/gtkgl/visual.h
 
 if HAVE_GLADEUI
 gladedir = $(GLADEUI_CATDIR)
@@ -48,6 +50,7 @@ pkgconfigdir = $(PKG_CONFIG_DIR)
 pkgconfig_DATA = gtkglcanvas.pc
 
 __top_builddir__libgtkglcanvas_la_CFLAGS = \
+    -I$(top_srcdir)/include \
 	$(GTK_CFLAGS) \
 	$(OpenGL_CFLAGS) \
 	$(GLEW_CFLAGS) \

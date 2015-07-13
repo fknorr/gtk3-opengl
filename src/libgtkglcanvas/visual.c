@@ -1,4 +1,4 @@
-#include "visual.h"
+#include <gtkgl/visual.h>
 #include <assert.h>
 
 

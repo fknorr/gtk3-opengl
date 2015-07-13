@@ -55,8 +55,8 @@
 #include <gdk/gdkx.h>
 #include <glib-object.h>
 
-#include "visual.h"
-#include "canvas.h"
+#include <gtkgl/visual.h>
+#include <gtkgl/canvas.h>
 #include "canvas_impl.h"
 
 

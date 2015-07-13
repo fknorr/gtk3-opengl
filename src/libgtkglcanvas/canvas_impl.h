@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "canvas.h"
+#include <gtkgl/canvas.h>
 
 
 typedef struct _GtkGLCanvas_Priv GtkGLCanvas_Priv;

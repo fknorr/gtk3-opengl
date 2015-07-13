@@ -70,6 +70,11 @@ AM_CONDITIONAL(PLATFORM_WIN32, test x"$platform_win32" = "xyes")
 AM_CONDITIONAL(NATIVE_WIN32, test x"$native_win32" = "xyes")
 AM_CONDITIONAL(HAVE_GLADEUI, test x"$have_glade" = "xyes")
 
+srcdir=`readlink -f "$srcdir"`
+builddir=`readlink -f "$top_builddir"`
+AC_DEFINE_UNQUOTED([PREFIX], ["$prefix"], [Installation Prefix])
+AC_DEFINE_UNQUOTED([SOURCE_DIR], ["$srcdir"], [Absolute Source Directory])
+
 AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
 
 pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s/'//gp;q;}"`"

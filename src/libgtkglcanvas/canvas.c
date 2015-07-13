@@ -47,7 +47,7 @@
  **/
 
 
-#include "canvas.h"
+#include <gtkgl/canvas.h>
 #include "canvas_impl.h"
 #include <GL/glew.h>
 
