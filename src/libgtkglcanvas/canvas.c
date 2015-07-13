@@ -96,7 +96,6 @@ gtk_gl_canvas_finalize(GObject *obj) {
 	GtkGLCanvas *canvas = GTK_GL_CANVAS(obj);
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	free(priv->native);
-	free(priv->error_msg);
 
     G_OBJECT_CLASS(gtk_gl_canvas_parent_class)->finalize(obj);
 }
@@ -188,8 +187,6 @@ gtk_gl_canvas_init(GtkGLCanvas *self) {
 
 	priv->native = gtk_gl_canvas_native_new();
 	priv->is_dummy = TRUE;
-	priv->error = FALSE;
-	priv->error_msg = NULL;
 
     gtk_widget_set_can_focus(wid, TRUE);
     gtk_widget_set_receives_default(wid, TRUE);
@@ -245,8 +242,6 @@ gtk_gl_canvas_new(void) {
 static void
 gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	priv->error = FALSE;
-	priv->error_msg = NULL;
 	if (!priv->is_dummy) {
 		gtk_gl_canvas_native_destroy_context(canvas);
     }
@@ -256,7 +251,7 @@ gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas) {
 static void
 gtk_gl_canvas_after_create_context(GtkGLCanvas *canvas, gboolean success) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	priv->is_dummy = priv->error = !success;
+    priv->is_dummy = !success;
 	gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 
@@ -287,16 +282,10 @@ gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
 void
 gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	g_assert(!priv->is_dummy && !priv->error);
+	g_assert(!priv->is_dummy);
 	gtk_gl_canvas_native_destroy_context(canvas);
 
 	priv->is_dummy = TRUE;
-	priv->error = FALSE;
-	if (priv->error_msg) {
-		free(priv->error_msg);
-		priv->error_msg = NULL;
-	}
-
 	gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 
@@ -311,22 +300,15 @@ gtk_gl_canvas_has_context(GtkGLCanvas *canvas) {
 void
 gtk_gl_canvas_make_current(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
-	g_assert(!priv->is_dummy && !priv->error);
+	g_assert(!priv->is_dummy);
 	gtk_gl_canvas_native_make_current(wid);
-}
-
-
-const char*
-gtk_gl_canvas_get_error (GtkGLCanvas *canvas) {
-    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	return priv->error_msg;
 }
 
 
 void
 gtk_gl_canvas_display_frame(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
-	g_assert(!priv->is_dummy && !priv->error);
+	g_assert(!priv->is_dummy);
 
     if (priv->double_buffered) {
         gtk_gl_canvas_native_swap_buffers(wid);

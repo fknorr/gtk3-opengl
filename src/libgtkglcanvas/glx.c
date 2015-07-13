@@ -262,11 +262,28 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 }
 
 
+typedef int (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
+static __thread XErrorHandler old_error_handler;
+static __thread XErrorEvent last_error;
+static __thread gboolean have_error;
+
+
+static int
+silent_x_error_handler(Display *dpy, XErrorEvent *ev) {
+    last_error = *ev;
+    have_error = TRUE;
+    return 0;
+}
+
+
 static void
 gtk_gl_canvas_native_before_create_context(GtkGLVisual *visual) {
     assert(visual);
     assert(glxew_initialized);
     assert(GLXEW_VERSION_1_3);
+
+    have_error = FALSE;
+    old_error_handler = XSetErrorHandler(silent_x_error_handler);
 }
 
 
@@ -277,9 +294,16 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
     GtkGLCanvas_NativePriv *native = priv->native;
     int attrib;
 
+    if (!native->glc) return;
+
+    XFlush(native->dpy);
+    XSetErrorHandler(old_error_handler);
+
     glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
             &attrib);
     priv->double_buffered = (unsigned) attrib;
+
+    glXMakeCurrent(native->dpy, native->win, native->glc);
 
     if (glewInit() != GLEW_OK) {
         g_warning("glewInit() after context creation failed");
@@ -361,6 +385,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 	GtkGLCanvas_NativePriv *native = priv->native;
 
     if (native->dpy) {
+        glXMakeCurrent(native->dpy, native->win, NULL);
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
 
@@ -373,15 +398,17 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 
 void
 gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas) {
-	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-    GtkGLCanvas_NativePriv *native = priv->native;
-    glXMakeCurrent(native->dpy, native->win, native->glc);
+	GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(canvas)->native;
+    if (native->dpy) {
+        glXMakeCurrent(native->dpy, native->win, native->glc);
+    }
 }
 
 
 void
 gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
-	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-    GtkGLCanvas_NativePriv *native = priv->native;
-    glXSwapBuffers(native->dpy, native->win);
+	GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(canvas)->native;
+    if (native->dpy) {
+        glXSwapBuffers(native->dpy, native->win);
+    }
 }

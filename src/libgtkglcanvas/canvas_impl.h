@@ -32,8 +32,6 @@ struct _GtkGLCanvas_Priv {
 	gboolean is_dummy;
     gboolean double_buffered;
 	unsigned effective_depth;
-	gboolean error;
-	char *error_msg;
 };
 
 

@@ -167,10 +167,7 @@ example_draw_gl(void) {
 static void
 update_context_info(void) {
 	if (gtk_gl_canvas_has_context(canvas)) {
-		char *text = g_strdup_printf(
-				"Vendor: %s\nRenderer: %s\nOpenGL Version:%s",
-				(const char*) glGetString(GL_VENDOR),
-				(const char*) glGetString(GL_RENDERER),
+		char *text = g_strdup_printf("OpenGL Version %s",
 				(const char*) glGetString(GL_VERSION));
 		gtk_label_set_text(info_label, text);
 		g_free(text);
@@ -244,7 +241,7 @@ example_create_context(void) {
 
 		if (!gtk_gl_canvas_create_context_with_version(canvas,
 				visuals->entries[i], ver_major, ver_minor, profile)) {
-			message_box(GTK_MESSAGE_ERROR, gtk_gl_canvas_get_error(canvas));
+			message_box(GTK_MESSAGE_ERROR, "Error creating context");
 		}
 		gtk_gl_visual_list_free(visuals);
     }

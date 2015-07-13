@@ -156,14 +156,6 @@ gboolean gtk_gl_canvas_has_context(GtkGLCanvas *canvas);
 
 
 /**
- * Returns the last error encountered by one of the gtk_gl_* functions.
- * @param canvas The canvas to check for
- * @return The error message
- */
-const char *gtk_gl_canvas_get_error(GtkGLCanvas *canvas);
-
-
-/**
  * Makes the OpenGL context of a @ref GtkGLCanvas current to the calling thread.
  *
  * This means that all subsequent calls to gl* functions will operate on this
