@@ -328,9 +328,7 @@
                             <property name="fixed_width">40</property>
                             <property name="title" translatable="yes">DblBuf</property>
                             <child>
-                              <object class="GtkCellRendererText" id="double-buffered-renderer">
-                                <property name="sensitive">False</property>
-                              </object>
+                              <object class="GtkCellRendererText" id="double-buffered-renderer"/>
                               <attributes>
                                 <attribute name="text">4</attribute>
                               </attributes>
