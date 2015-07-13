@@ -314,16 +314,22 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         GtkGLProfile profile) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    int attrib_list[] = {
-            GLX_CONTEXT_MAJOR_VERSION_ARB, ver_major,
-            GLX_CONTEXT_MINOR_VERSION_ARB, ver_minor,
-            GLX_CONTEXT_PROFILE_MASK_ARB, profile == GTK_GL_CORE_PROFILE
-                    ? GLX_CONTEXT_CORE_PROFILE_BIT_ARB
-                    : GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-            None
-        };
 
     if (GLXEW_ARB_create_context) {
+        int attrib_list[] = {
+                GLX_CONTEXT_MAJOR_VERSION_ARB, ver_major,
+                GLX_CONTEXT_MINOR_VERSION_ARB, ver_minor,
+                None, None, None
+        };
+        if (GLXEW_ARB_create_context_profile) {
+            attrib_list[4] = GLX_CONTEXT_PROFILE_MASK_ARB;
+            if (profile == GTK_GL_CORE_PROFILE) {
+                attrib_list[5] = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+            } else {
+                attrib_list[5] = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+            }
+        };
+
         gtk_gl_canvas_native_before_create_context(visual);
         native->glc = glXCreateContextAttribsARB(native->dpy, visual->cfg, NULL,
                 GL_TRUE, attrib_list);
