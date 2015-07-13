@@ -26,6 +26,9 @@
 G_BEGIN_DECLS
 
 
+typedef unsigned GtkGLBitSet;
+
+
 typedef enum _GtkGLColorType {
     GTK_GL_COLOR_RGBA = 1,
     GTK_GL_COLOR_INDEXED = 2
@@ -37,6 +40,13 @@ typedef enum _GtkGLTransparentType {
     GTK_GL_TRANSPARENT_RGB,
     GTK_GL_TRANSPARENT_INDEX
 } GtkGLTransparentType;
+
+
+typedef enum _GtkGLCaveat {
+    GTK_GL_CAVEAT_NONE,
+    GTK_GL_CAVEAT_SLOW,
+    GTK_GL_CAVEAT_NONCONFORMANT
+} GtkGLCaveat;
 
 
 typedef struct _GtkGLVisual GtkGLVisual;
@@ -51,7 +61,7 @@ typedef struct _GtkGLVisualList {
 
 typedef struct _GtkGLFramebufferConfig {
     gboolean accelerated;
-    unsigned color_type;
+    GtkGLBitSet color_types;
     unsigned color_bpp;
     int fb_level;
     gboolean double_buffered;
@@ -75,6 +85,7 @@ typedef struct _GtkGLFramebufferConfig {
     unsigned transparent_alpha;
     unsigned sample_buffers;
     unsigned samples_per_pixel;
+    GtkGLCaveat caveat;
 } GtkGLFramebufferConfig;
 
 
@@ -100,7 +111,10 @@ typedef enum _GtkGLAttribute {
     GTK_GL_TRANSPARENT_RED,
     GTK_GL_TRANSPARENT_GREEN,
     GTK_GL_TRANSPARENT_BLUE,
-    GTK_GL_TRANSPARENT_ALPHA
+    GTK_GL_TRANSPARENT_ALPHA,
+    GTK_GL_SAMPLE_BUFFERS,
+    GTK_GL_SAMPLES_PER_PIXEL,
+    GTK_GL_CAVEAT
 } GtkGLAttribute;
 
 

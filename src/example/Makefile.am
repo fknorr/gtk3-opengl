@@ -27,6 +27,7 @@ __top_builddir__example_LDADD = \
 	$(GLEW_LIBS)
 
 __top_builddir__example_CPPFLAGS = \
+	-I$(top_srcdir)/src/libgtkglcanvas \
 	$(OpenGL_CFLAGS) \
 	$(GLEW_CFLAGS) \
     $(GTK_CFLAGS)

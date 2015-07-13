@@ -160,7 +160,7 @@ example_create_context(void) {
 			gtk_gl_describe_visual(visuals->entries[i], &cfg);
 			gtk_list_store_insert_with_values(visual_list_store, NULL, -1,
 				0, cfg.accelerated,
-				1, cfg.color_type & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
+				1, cfg.color_types & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
 				2, cfg.color_bpp,
 				3, cfg.fb_level,
 				4, cfg.double_buffered,
@@ -179,13 +179,11 @@ example_create_context(void) {
 				17, cfg.transparent_type == GTK_GL_TRANSPARENT_NONE ? "None"
 					: cfg.transparent_type == GTK_GL_TRANSPARENT_RGB ? "RGB"
 					: "Indexed",
-				18, cfg.transparent_index,
-				19, cfg.transparent_red,
-				20, cfg.transparent_green,
-				21, cfg.transparent_blue,
-				22, cfg.transparent_alpha,
-				23, cfg.sample_buffers,
-				24, cfg.samples_per_pixel,
+				18, cfg.sample_buffers,
+				19, cfg.samples_per_pixel,
+				20, cfg.caveat == GTK_GL_CAVEAT_SLOW ? "Slow"
+					: cfg.caveat == GTK_GL_CAVEAT_NONCONFORMANT
+						? "Non-conformant": "-",
 				-1);
 		}
 
@@ -259,7 +257,7 @@ main(int argc, char *argv[]) {
 
 	window = GTK_WIDGET(GET("window"));
 	info_label = GTK_LABEL(GET("info-label"));
-	chooser = GTK_DIALOG(GET("visual-chooser"));
+	chooser = GTK_DIALOG(GET("context-chooser"));
 	visual_list_store = GTK_LIST_STORE(GET("visual-list-store"));
 	canvas = GTK_GL_CANVAS(GET("canvas"));
 	visual_selection = gtk_tree_view_get_selection(

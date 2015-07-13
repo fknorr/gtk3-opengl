@@ -40,7 +40,7 @@ is_suitable_configuration(const GtkGLFramebufferConfig *config,
 
         switch (attrib) {
             TEST_CASE(ACCELERATED, suits_bool, config->accelerated)
-            TEST_CASE(COLOR_TYPE, suits_bool, config->color_type & value)
+            TEST_CASE(COLOR_TYPE, suits_bool, config->color_types & value)
             TEST_CASE(FB_LEVEL, suits_range, config->fb_level)
             TEST_CASE(COLOR_BPP, suits_range, config->color_bpp)
             TEST_CASE(DOUBLE_BUFFERED, suits_bool, config->double_buffered)
@@ -63,6 +63,10 @@ is_suitable_configuration(const GtkGLFramebufferConfig *config,
             TEST_CASE(TRANSPARENT_BLUE, suits_range, config->transparent_blue)
             TEST_CASE(TRANSPARENT_ALPHA, suits_range,
                     config->transparent_alpha)
+            TEST_CASE(SAMPLE_BUFFERS, suits_range, config->sample_buffers)
+            TEST_CASE(SAMPLES_PER_PIXEL, suits_range,
+                    config->samples_per_pixel)
+            TEST_CASE(CAVEAT, suits_range, config->caveat)
         }
 
 #undef TEST_CASE

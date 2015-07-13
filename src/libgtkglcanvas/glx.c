@@ -216,7 +216,7 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     out->accelerated = TRUE;
 
     QUERY(RENDER_TYPE);
-    out->color_type = (
+    out->color_types = (
             (value & GLX_RGBA_BIT ? GTK_GL_COLOR_RGBA : 0)
             | (value & GLX_COLOR_INDEX_BIT ? GTK_GL_COLOR_INDEXED : 0));
 
@@ -257,6 +257,12 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     } else {
         out->sample_buffers = out->samples_per_pixel = 0;
     }
+
+    QUERY(CONFIG_CAVEAT);
+    out->caveat
+            = value == GLX_SLOW_CONFIG ? GTK_GL_CAVEAT_SLOW
+            : value == GLX_NON_CONFORMANT_CONFIG ? GTK_GL_CAVEAT_NONCONFORMANT
+            : GTK_GL_CAVEAT_NONE;
 
 #undef QUERY
 }
