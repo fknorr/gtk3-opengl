@@ -17,45 +17,12 @@
  * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * This file is based on the work of André Diego Piske,
- * see <https://github.com/andrepiske/tegtkgl>. To retain André's licensing
- * conditions on the parts of the software authored by him, the following
- * copyright notice shall be included in this and all derived files:
- */
 
-/**
- * Copyright (c) 2013 André Diego Piske
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- **/
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <gtk/gtk.h>
 #include <gtkgl/visual.h>
 #include <gtkgl/canvas.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 #include <math.h>
-#include <gio/gio.h>
 
 
 static gboolean running = TRUE;
@@ -67,6 +34,7 @@ static GtkLabel *info_label;
 static GtkTreeSelection *visual_selection;
 static GtkAdjustment *major_adjust, *minor_adjust;
 static GtkComboBox *profile_combo;
+static GtkButton *create_button, *destroy_button, *start_button, *stop_button;
 
 
 static void
@@ -103,23 +71,12 @@ example_stop_animation(void) {
 }
 
 
-gboolean
-example_click(GtkWidget *wid, GdkEvent *ev, gpointer user_data) {
-    char *msg = g_strdup_printf("Clicked at %.3fx%.3f with button %d\n",
-        ev->button.x, ev->button.y, ev->button.button);
-	message_box(GTK_MESSAGE_INFO, msg);
-	g_free(msg);
-    return TRUE;
-}
-
-static float s = 0.f;
+static float angle = 0.f;
 
 static gboolean
 example_animate(gpointer ud) {
     if (running) {
-		// some triangle rotation stuff
-		s += 0.03f;
-
+		angle += 2;
 		gtk_widget_queue_draw(GTK_WIDGET(canvas));
 	}
 	return TRUE;
@@ -127,46 +84,50 @@ example_animate(gpointer ud) {
 
 
 gboolean
-example_draw_gl(void) {
+example_draw(void) {
+	GtkAllocation alloc;
+	float aspect;
+
 	if (!gtk_gl_canvas_has_context(canvas))
 		return FALSE;
 
-	// this is very important, as OpenGL has a somewhat global state.
-	// this will set the OpenGL state to this very widget.
+	// Bind the global OpenGL state to the canvas
 	gtk_gl_canvas_make_current(canvas);
 
-    // more bureaucracy
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
+	// Set the viewport to the entire window (scaling)
+	gtk_widget_get_allocation(GTK_WIDGET(canvas), &alloc);
+	glViewport(0, 0, alloc.width, alloc.height);
+	aspect = (float) alloc.width / alloc.height;
 
-    glViewport(0, 0, 200, 200);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+	glClearColor(0.1f, 0.1f, 0.1f, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-aspect, aspect, -1, 1, -1, 1);
 
-    glClearColor(0, 0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glRotatef(angle, 0, 0, 1);
 
-    glRotatef(cos(s)*360.f-180.f, 0.f, 0.f, 1.0);
-    glColor4ub(0xed, 0xb9, 0x1e, 0xff);
-    glBegin(GL_TRIANGLES);
-    glVertex2f(-0.7f, -0.5f);
-    glVertex2f(0.4f, -0.5f);
-    glVertex2f(0.f, 0.8f);
-    glEnd();
+	glBegin(GL_TRIANGLES);
+		glColor3f(1, 0, 0);
+		glVertex2f(0, 0.7f);
+		glColor3f(0, 1, 0);
+		glVertex2f(-sinf(M_PI/3)*0.7f, -cosf(M_PI/3)*0.7f);
+		glColor3f(0, 0, 1);
+		glVertex2f(sinf(M_PI/3)*0.7f, -cosf(M_PI/3)*0.7f);
+	glEnd();
 
-    gtk_gl_canvas_display_frame(canvas);
-    return TRUE;
+	gtk_gl_canvas_display_frame(canvas);
+	return TRUE;
 }
 
 
 static void
 update_context_info(void) {
-	if (gtk_gl_canvas_has_context(canvas)) {
+	gboolean present = gtk_gl_canvas_has_context(canvas);
+	if (present) {
 		char *text = g_strdup_printf("OpenGL Version %s",
 				(const char*) glGetString(GL_VERSION));
 		gtk_label_set_text(info_label, text);
@@ -174,6 +135,11 @@ update_context_info(void) {
 	} else {
 		gtk_label_set_text(info_label, "No context present");
 	}
+
+	gtk_widget_set_sensitive(GTK_WIDGET(create_button), !present);
+	gtk_widget_set_sensitive(GTK_WIDGET(destroy_button), present);
+	gtk_widget_set_sensitive(GTK_WIDGET(start_button), present);
+	gtk_widget_set_sensitive(GTK_WIDGET(stop_button), present);
 }
 
 
@@ -281,7 +247,7 @@ main(int argc, char *argv[]) {
 	GtkBuilder *builder;
 	GError *error = NULL;
 
-    gtk_init(&argc, &argv);
+	gtk_init(&argc, &argv);
 
 	builder = gtk_builder_new();
 	gtk_builder_add_from_file(builder, "src/example/example.ui", &error);
@@ -289,29 +255,34 @@ main(int argc, char *argv[]) {
 
 	gtk_builder_connect_signals(builder, NULL);
 
-	window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
-	info_label = GTK_LABEL(gtk_builder_get_object(builder, "info-label"));
-	chooser = GTK_DIALOG(gtk_builder_get_object(builder, "visual-chooser"));
-	visual_list_store = GTK_LIST_STORE(gtk_builder_get_object(builder,
-			"visual-list-store"));
-	canvas = GTK_GL_CANVAS(gtk_builder_get_object(builder, "canvas"));
-	visual_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(
-			gtk_builder_get_object(builder, "visual-list")));
-	major_adjust = GTK_ADJUSTMENT(gtk_builder_get_object(builder,
-			"ver-major"));
-	minor_adjust = GTK_ADJUSTMENT(gtk_builder_get_object(builder,
-			"ver-minor"));
-	profile_combo = GTK_COMBO_BOX(gtk_builder_get_object(builder,
-			"profile-combobox"));
+#define GET(name) gtk_builder_get_object(builder, name)
+
+	window = GTK_WIDGET(GET("window"));
+	info_label = GTK_LABEL(GET("info-label"));
+	chooser = GTK_DIALOG(GET("visual-chooser"));
+	visual_list_store = GTK_LIST_STORE(GET("visual-list-store"));
+	canvas = GTK_GL_CANVAS(GET("canvas"));
+	visual_selection = gtk_tree_view_get_selection(
+			GTK_TREE_VIEW(GET("visual-list")));
+	major_adjust = GTK_ADJUSTMENT(GET("ver-major"));
+	minor_adjust = GTK_ADJUSTMENT(GET("ver-minor"));
+	profile_combo = GTK_COMBO_BOX(GET("profile-combobox"));
+	create_button = GTK_BUTTON(GET("create-button"));
+	destroy_button = GTK_BUTTON(GET("destroy-button"));
+	start_button = GTK_BUTTON(GET("start-anim-button"));
+	stop_button = GTK_BUTTON(GET("stop-anim-button"));
+
+#undef GET
 
 	gtk_tree_selection_set_mode(visual_selection, GTK_SELECTION_SINGLE);
+	update_context_info();
 
 	gtk_widget_show_all(window);
 	g_object_unref(builder);
 
 	running = FALSE;
-    g_timeout_add_full(1000, 10, example_animate, 0, 0);
+	g_timeout_add_full(1000, 10, example_animate, 0, 0);
 
-    gtk_main();
-    return 0;
+	gtk_main();
+	return 0;
 }

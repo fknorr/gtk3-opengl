@@ -106,7 +106,7 @@
                 <property name="receives_default">True</property>
                 <property name="double_buffered">False</property>
                 <signal name="destroy" handler="example_stop_animation" swapped="no"/>
-                <signal name="draw" handler="example_draw_gl" swapped="no"/>
+                <signal name="draw" handler="example_draw" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -123,8 +123,8 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">3</property>
                 <child>
-                  <object class="GtkButton" id="create-butto">
-                    <property name="label" translatable="yes">Create GL context</property>
+                  <object class="GtkButton" id="create-button">
+                    <property name="label" translatable="yes">Create context...</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -138,7 +138,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="destroy-button">
-                    <property name="label" translatable="yes">Destroy GL context</property>
+                    <property name="label" translatable="yes">Destroy context</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -148,21 +148,6 @@
                     <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="check-button">
-                    <property name="label" translatable="yes">Check for active
-GL context</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <signal name="clicked" handler="example_check_context" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -176,7 +161,7 @@ GL context</property>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">3</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -191,7 +176,7 @@ GL context</property>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">4</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
               </object>
@@ -245,7 +230,7 @@ GL context</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="create-button">
+              <object class="GtkButton" id="apply-button">
                 <property name="label" translatable="yes">Create</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -753,7 +738,7 @@ GL context</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">create-button</action-widget>
+      <action-widget response="1">apply-button</action-widget>
     </action-widgets>
   </object>
 </interface>

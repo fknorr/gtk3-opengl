@@ -49,11 +49,7 @@
 
 #include "canvas.h"
 #include "canvas_impl.h"
-
-#include <gtk/gtk.h>
-#include <glib-object.h>
-#include <stdlib.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 
 
 struct _GtkGLCanvas {
@@ -95,7 +91,7 @@ static void
 gtk_gl_canvas_finalize(GObject *obj) {
 	GtkGLCanvas *canvas = GTK_GL_CANVAS(obj);
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-	free(priv->native);
+	g_free(priv->native);
 
     G_OBJECT_CLASS(gtk_gl_canvas_parent_class)->finalize(obj);
 }
