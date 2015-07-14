@@ -38,8 +38,10 @@ static GtkButton *create_button, *destroy_button, *start_button, *stop_button;
 
 static float angle = 0.f;
 
-static GLuint program, vertex_buffer, index_buffer;
-static GLuint pos_loc, color_loc;
+static gboolean has_direct_mode, has_shaders, has_vaos;
+static GLuint program, rect_vertex_buffer, rect_index_buffer;
+static GLuint hex_vertex_buffer, hex_index_buffer, hex_vao;
+static GLuint projection_loc, modelview_loc, pos_loc, color_loc;
 
 static void
 message_box_response(GtkDialog *dialog) {
@@ -123,53 +125,125 @@ compile_attach_shader(GLuint program, GLenum type, const char *file) {
 
 static void
 init_context(void) {
-	static const GLfloat verts[] = {
- 	//       x   y      R  G  B
-			-1,  1,		1, 0, 0,
-			-1, -1,     1, 1, 0,
-			 1, -1,     0, 1, 0,
-		 	 1,  1,     0, 0, 1
-	};
-	static const GLuint inds[] = { 0, 1, 2, 2, 3, 0 };
 
-    program = glCreateProgram();
-    compile_attach_shader(program, GL_VERTEX_SHADER,
-			"src/example/vertex.glsl");
-    compile_attach_shader(program, GL_FRAGMENT_SHADER,
-			"src/example/fragment.glsl");
-    glLinkProgram(program);
-    glValidateProgram(program);
+	has_direct_mode = !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
+	has_shaders = GLEW_VERSION_2_0
+			&& (!GLEW_VERSION_3_1 || GLEW_ARB_compatibility);
+	has_vaos = GLEW_VERSION_3_0;
 
-	pos_loc = glGetAttribLocation(program, "pos");
-	color_loc = glGetAttribLocation(program, "color");
+	if (has_shaders || has_vaos) {
+	    program = glCreateProgram();
+	    compile_attach_shader(program, GL_VERTEX_SHADER,
+				"src/example/vertex.glsl");
+	    compile_attach_shader(program, GL_FRAGMENT_SHADER,
+				"src/example/fragment.glsl");
+	    glLinkProgram(program);
+	    glValidateProgram(program);
 
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof verts, verts, GL_STATIC_DRAW);
+		pos_loc = glGetAttribLocation(program, "pos");
+		color_loc = glGetAttribLocation(program, "color");
+		modelview_loc = glGetUniformLocation(program, "modelview");
+		projection_loc = glGetUniformLocation(program, "projection");
+	}
 
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, index_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof inds, inds, GL_STATIC_DRAW);
+	if (has_shaders) {
+		static const GLfloat rect_verts[] = {
+	 	//       x   y      R  G  B
+				-1,  1,		1, 0, 0,
+				-1, -1,     1, 1, 0,
+				 1, -1,     0, 1, 0,
+			 	 1,  1,     0, 0, 1
+		};
+		static const GLuint rect_inds[] = { 0, 1, 2, 2, 3, 0 };
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glGenBuffers(1, &rect_index_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, rect_index_buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof rect_inds, rect_inds,
+				GL_STATIC_DRAW);
+
+		glGenBuffers(1, &rect_vertex_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, rect_vertex_buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof rect_verts, rect_verts,
+				GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	if (has_vaos) {
+		static const GLfloat
+#define SN 0.866025f
+#define CS 0.5f
+			hex_verts[] = {
+			        0,    0,     1, 0, 0,
+				    0,    1,     1, 1, 0,
+				   SN,   CS,     0, 1, 0,
+				   SN,  -CS,     0, 1, 1,
+				    0,   -1,     0, 0, 1,
+				  -SN,  -CS,     1, 0, 1,
+				  -SN,   CS,     1, 1, 1
+			};
+		static const GLuint
+			hex_inds[] = { 0, 1, 2, 3, 4, 5, 6, 1 };
+
+		glGenVertexArrays(1, &hex_vao);
+		glBindVertexArray(hex_vao);
+
+		glGenBuffers(1, &hex_index_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, hex_index_buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof hex_inds, hex_inds,
+				GL_STATIC_DRAW);
+
+		glGenBuffers(1, &hex_vertex_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, hex_vertex_buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof hex_verts, hex_verts,
+				GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(pos_loc);
+		glVertexAttribPointer(pos_loc, 2, GL_FLOAT, GL_FALSE, 20,
+				(const void*) 0);
+		glEnableVertexAttribArray(color_loc);
+		glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, 20,
+				(const void*) 8);
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
 }
 
 
 static void
 cleanup_context(void) {
-	glUseProgram(0);
-	glDeleteProgram(program);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &index_buffer);
-	glDeleteBuffers(1, &vertex_buffer);
+	if (has_vaos) {
+		glBindVertexArray(0);
+		glDeleteVertexArrays(1, &hex_vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &hex_index_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &hex_vertex_buffer);
+	}
+	if (has_shaders) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &rect_index_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &rect_vertex_buffer);
+	}
+	if (has_shaders || has_vaos) {
+		glUseProgram(0);
+		glDeleteProgram(program);
+	}
 }
 
 
 static void
-draw_direct_mode(void) {
+draw_direct_mode(float aspect) {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-aspect, aspect, -1, 1, -1, 1);
+
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glRotatef(angle, 0, 0, 1);
-	glScalef(0.6, 0.6, 0.6);
+	glScalef(0.8, 0.8, 0.8);
 
 	glBegin(GL_TRIANGLES);
 		glColor3f(1, 0, 0);
@@ -183,14 +257,40 @@ draw_direct_mode(void) {
 
 
 static void
-draw_with_shaders(void) {
-	glLoadIdentity();
-	glRotatef(-angle, 0, 0, 1);
-	glScalef(0.4, 0.4, 0.4);
+begin_draw_with_shaders(float aspect, float scale) {
+	float projection[16] = {
+		1.f/aspect,   0,   0,   0,
+		         0,   1,   0,   0,
+				 0,   0,  -1,   0,
+				-0,  -0,  -0,   1
+	};
+	float sin_angle = sin(angle*M_PI/180),
+	      cos_angle = cos(angle*M_PI/180);
+	float modelview[16] = {
+		 cos_angle*scale, sin_angle*scale,     0,   0,
+		-sin_angle*scale, cos_angle*scale,     0,   0,
+		               0,               0, scale,   0,
+		               0,               0,     0,   1
+	};
 
 	glUseProgram(program);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
+}
+
+
+static void
+end_draw_with_shaders(void) {
+	glUseProgram(0);
+}
+
+
+static void
+draw_with_shaders(float aspect) {
+	begin_draw_with_shaders(aspect, 0.6f);
+
+	glBindBuffer(GL_ARRAY_BUFFER, rect_vertex_buffer);
 	glEnableVertexAttribArray(pos_loc);
 	glVertexAttribPointer(pos_loc, 2, GL_FLOAT, GL_FALSE, 20,
 			(const void*) 0);
@@ -198,15 +298,25 @@ draw_with_shaders(void) {
 	glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, 20,
 			(const void*) 8);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rect_index_buffer);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glDisableVertexAttribArray(color_loc);
-	glDisableVertexAttribArray(pos_loc);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	end_draw_with_shaders();
+}
 
-	glUseProgram(0);
+
+static void
+draw_with_vaos(float aspect) {
+	begin_draw_with_shaders(aspect, 0.75f);
+
+	glBindVertexArray(hex_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hex_index_buffer);
+	glDrawElements(GL_TRIANGLE_FAN, 8, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	end_draw_with_shaders();
 }
 
 
@@ -214,7 +324,6 @@ gboolean
 example_draw(void) {
 	GtkAllocation alloc;
 	float aspect;
-	GLuint loc;
 
 	if (!gtk_gl_canvas_has_context(canvas))
 		return FALSE;
@@ -224,21 +333,27 @@ example_draw(void) {
 
 	// Set the viewport to the entire window (scaling)
 	gtk_widget_get_allocation(GTK_WIDGET(canvas), &alloc);
-	aspect = (float) alloc.width / alloc.height / 2;
+	aspect = (float) alloc.width / alloc.height;
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-aspect, aspect, -1, 1, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
+	if (has_direct_mode) {
+		glViewport(0, alloc.height/2, alloc.width/2,
+				alloc.height-alloc.height/2);
+		draw_direct_mode(aspect);
+	}
 
-	glViewport(0, 0, alloc.width/2, alloc.height);
-	draw_direct_mode();
+	if (has_shaders) {
+		glViewport(alloc.width/2, alloc.height/2, alloc.width-alloc.width/2,
+				alloc.height/2);
+		draw_with_shaders(aspect);
+	}
 
-	glViewport(alloc.width/2, 0, alloc.width-alloc.width/2, alloc.height);
-	draw_with_shaders();
+	if (has_vaos) {
+		glViewport(0, 0, alloc.width/2, alloc.height/2);
+		draw_with_vaos(aspect);
+	}
 
 	gtk_gl_canvas_display_frame(canvas);
 	return TRUE;
