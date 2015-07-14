@@ -136,7 +136,7 @@ gtk_gl_visual_free(GtkGLVisual *visual) {
 struct _GtkGLCanvas_NativePriv {
     Display *dpy;
     int screen;
-    Window win;
+    GLXWindow win;
     GLXContext glc;
 };
 
@@ -152,21 +152,17 @@ gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
 
-    native->win = gdk_x11_window_get_xid(priv->win);
-	if (!native->win) {
-        g_critical("Unable to get X11 window for canvas");
-    }
-
     native->dpy = gdk_x11_display_get_xdisplay(gdk_window_get_display(
             priv->win));
 	if (!native->dpy) {
         g_critical("Unable to get X11 display");
     }
 
-    native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
-            priv->win));
-
-    init_glxew(native->dpy, native->screen);
+    init_glxew(native->dpy, gdk_x11_screen_get_screen_number(
+            gdk_window_get_screen(priv->win)));
+    native->screen = 0;
+    native->win = 0;
+    native->glc = NULL;
 }
 
 
@@ -282,14 +278,29 @@ silent_x_error_handler(Display *dpy, XErrorEvent *ev) {
 }
 
 
-static void
-gtk_gl_canvas_native_before_create_context(GtkGLVisual *visual) {
+static gboolean
+gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual *visual) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
     assert(visual);
     assert(glxew_initialized);
     assert(GLXEW_VERSION_1_3);
 
     have_error = FALSE;
     old_error_handler = XSetErrorHandler(silent_x_error_handler);
+
+    native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
+            priv->win));
+    native->win = glXCreateWindow(native->dpy, visual->cfg,
+            gdk_x11_window_get_xid(priv->win), NULL);
+    if (!native->win) {
+        g_warning("glXCreateWindow() failed");
+        XSetErrorHandler(old_error_handler);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
@@ -343,7 +354,10 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
     GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
 
-    gtk_gl_canvas_native_before_create_context(visual);
+    if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
+        return FALSE;
+    }
+
     vi = glXGetVisualFromFBConfig(visual->dpy, visual->cfg);
     if (!vi) {
         g_error("Unable to get X visual form GtkGLVisual");
@@ -384,7 +398,9 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
             }
         };
 
-        gtk_gl_canvas_native_before_create_context(visual);
+        if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
+            return FALSE;
+        }
         native->glc = glXCreateContextAttribsARB(native->dpy, visual->cfg, NULL,
                 GL_TRUE, attrib_list);
         if (!gtk_gl_canvas_native_after_create_context(canvas, visual)) {
@@ -415,10 +431,13 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
         glXMakeCurrent(native->dpy, native->win, NULL);
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
-
+    }
+    if (native->win) {
         if (GLXEW_MESA_release_buffers) {
             glXReleaseBuffersMESA(native->dpy, native->win);
         }
+        glXDestroyWindow(native->dpy, native->win);
+        native->win = 0;
     }
 }
 
