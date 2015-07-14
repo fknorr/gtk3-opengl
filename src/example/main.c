@@ -125,6 +125,7 @@ compile_attach_shader(GLuint program, GLenum type, const char *file) {
 
 static void
 init_context(void) {
+	glEnable(GL_MULTISAMPLE);
 
 	has_direct_mode = !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
 	has_shaders = GLEW_VERSION_2_0
