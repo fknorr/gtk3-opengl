@@ -138,6 +138,7 @@ struct _GtkGLCanvas_NativePriv {
     int screen;
     GLXWindow win;
     GLXContext glc;
+    XVisualInfo visual_info;
 };
 
 
@@ -151,12 +152,23 @@ void
 gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
+    XWindowAttributes xattrs;
+    XVisualInfo template, *vi;
+    int count;
 
     native->dpy = gdk_x11_display_get_xdisplay(gdk_window_get_display(
             priv->win));
 	if (!native->dpy) {
         g_critical("Unable to get X11 display");
     }
+
+    XGetWindowAttributes(native->dpy, gdk_x11_window_get_xid(priv->win),
+            &xattrs);
+    template.visualid = XVisualIDFromVisual(xattrs.visual);
+    vi = XGetVisualInfo(native->dpy, VisualIDMask, &template, &count);
+    assert(count == 1);
+    native->visual_info = *vi;
+    XFree(vi);
 
     init_glxew(native->dpy, gdk_x11_screen_get_screen_number(
             gdk_window_get_screen(priv->win)));
@@ -165,6 +177,19 @@ gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
     native->glc = NULL;
 }
 
+
+static gboolean
+visual_type_matches(int glx, int x) {
+    switch (glx) {
+        case GLX_TRUE_COLOR: return x == TrueColor;
+        case GLX_DIRECT_COLOR: return x == DirectColor;
+        case GLX_PSEUDO_COLOR: return x == PseudoColor;
+        case GLX_STATIC_COLOR: return x == StaticColor;
+        case GLX_GRAY_SCALE: return x == GrayScale;
+        case GLX_STATIC_GRAY: return x == StaticGray;
+        default: return FALSE;
+    }
+}
 
 GtkGLVisualList *
 gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
@@ -185,10 +210,13 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
     for (i = 0, j = 0; i < list->count; ++i) {
-        int targets;
+        int targets, vtype;
         glXGetFBConfigAttrib(native->dpy, fbconfigs[i], GLX_DRAWABLE_TYPE,
-            & targets);
-        if (targets & GLX_WINDOW_BIT) {
+            &targets);
+        glXGetFBConfigAttrib(native->dpy, fbconfigs[i], GLX_X_VISUAL_TYPE,
+            &vtype);
+        if ((targets & GLX_WINDOW_BIT)
+                && visual_type_matches(vtype, native->visual_info.class)) {
             list->entries[j++] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
         }
     }
