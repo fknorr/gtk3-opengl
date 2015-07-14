@@ -327,6 +327,7 @@ example_create_context(void) {
 		if (gtk_gl_canvas_create_context_with_version(canvas,
 				visuals->entries[i], ver_major, ver_minor, profile)) {
 			init_context();
+			example_draw();
 		} else {
 			message_box(GTK_MESSAGE_ERROR, "Error creating context");
 		}
