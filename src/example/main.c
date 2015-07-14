@@ -125,11 +125,18 @@ compile_attach_shader(GLuint program, GLenum type, const char *file) {
 
 static void
 init_context(void) {
+	GLint mask;
+	gboolean compatibility_context
+	 		= !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
+	if (!compatibility_context) {
+		glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
+		compatibility_context = !!(mask &GL_CONTEXT_COMPATIBILITY_PROFILE_BIT);
+	}
+
 	glEnable(GL_MULTISAMPLE);
 
-	has_direct_mode = !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
-	has_shaders = GLEW_VERSION_2_0
-			&& (!GLEW_VERSION_3_1 || GLEW_ARB_compatibility);
+	has_direct_mode = compatibility_context;
+	has_shaders = GLEW_VERSION_2_0 && compatibility_context;
 	has_vaos = GLEW_VERSION_3_0;
 
 	if (has_shaders || has_vaos) {
@@ -175,13 +182,13 @@ init_context(void) {
 #define SN 0.866025f
 #define CS 0.5f
 			hex_verts[] = {
-			        0,    0,     1, 0, 0,
+			        0,    0,     1, 1, 1,
 				    0,    1,     1, 1, 0,
 				   SN,   CS,     0, 1, 0,
 				   SN,  -CS,     0, 1, 1,
 				    0,   -1,     0, 0, 1,
 				  -SN,  -CS,     1, 0, 1,
-				  -SN,   CS,     1, 1, 1
+				  -SN,   CS,     1, 0, 0
 			};
 		static const GLuint
 			hex_inds[] = { 0, 1, 2, 3, 4, 5, 6, 1 };
