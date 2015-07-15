@@ -64,7 +64,46 @@
 static gboolean glxew_initialized = FALSE;
 
 
+typedef int (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
+static XErrorHandler old_xerror_handler;
+static XErrorEvent last_xerror;
+static gboolean have_xerror_flag;
+static GMutex xerror_mutex;
+
+
+static int
+silent_xerror_handler(Display *dpy, XErrorEvent *ev) {
+    last_xerror = *ev;
+    have_xerror_flag = TRUE;
+    return 0;
+}
+
+
 static void
+begin_capture_xerrors(void) {
+    g_mutex_lock(&xerror_mutex);
+    have_xerror_flag = FALSE;
+    old_xerror_handler = XSetErrorHandler(silent_xerror_handler);
+}
+
+
+static gboolean
+have_xerror(Display *dpy) {
+    XSync(dpy, False);
+    return have_xerror_flag;
+}
+
+
+static gboolean
+end_capture_xerrors(Display *dpy) {
+    gboolean had_xerror = have_xerror(dpy);
+    XSetErrorHandler(old_xerror_handler);
+    g_mutex_unlock(&xerror_mutex);
+    return had_xerror;
+}
+
+
+static gboolean
 init_glxew(Display *dpy, int screen) {
     static int attr_sets[][3] = {
             { GLX_RGBA, GLX_DOUBLEBUFFER, None },
@@ -80,24 +119,31 @@ init_glxew(Display *dpy, int screen) {
     size_t i;
     gboolean dummy_created = FALSE;
 
-    if (glxew_initialized) return;
+    if (glxew_initialized) return TRUE;
+
+    assert(dpy);
+    begin_capture_xerrors();
 
     // Create dummy context to call glewInit() on
-    if (!glXQueryExtension(dpy, &erb, &evb)) goto end;
+    if (!glXQueryExtension(dpy, &erb, &evb) || have_xerror(dpy)) goto end;
 
     for (i = 0; i < 4; ++i) {
-        if ((vi = glXChooseVisual(dpy, screen, attr_sets[i]))) break;
+        if ((vi = glXChooseVisual(dpy, screen, attr_sets[i]))
+                || have_xerror(dpy)) {
+            break;
+        }
     }
     if (!vi) goto end;
 
-    if (!(cxt = glXCreateContext(dpy, vi, None, True))) goto end_vi;
+    if (!(cxt = glXCreateContext(dpy, vi, None, True)) || have_xerror(dpy))
+        goto end_vi;
     if (!(wnd = XCreateSimpleWindow(dpy, RootWindow(dpy, screen), 0, 0, 1, 1,
-            1, 0, 0))) goto end_cxt;
-    if (glXMakeCurrent(dpy, wnd, cxt)) {
+            1, 0, 0)) || have_xerror(dpy)) goto end_cxt;
+    if (glXMakeCurrent(dpy, wnd, cxt) || have_xerror(dpy)) {
         dummy_created = TRUE;
         glewExperimental = GL_TRUE;
         if (glewInit() != GLEW_OK) {
-            g_error("Unable to initialize GLXEW");
+            g_warning("Unable to initialize GLXEW");
         } else {
             glxew_initialized = TRUE;
         }
@@ -108,9 +154,15 @@ end_cxt:
 end_vi:
     XFree(vi);
 end:
-    if (!dummy_created) {
-        g_error("Unable to create dummy context for GLXEW initialization");
+    if (end_capture_xerrors(dpy)) {
+        g_warning("Received X window system error during GLXEW initialization");
+        return FALSE;
     }
+    if (!dummy_created) {
+        g_warning("Unable to create dummy context for GLXEW initialization");
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
@@ -134,6 +186,7 @@ gtk_gl_visual_free(GtkGLVisual *visual) {
 
 
 struct _GtkGLCanvas_NativePriv {
+    gboolean initialized;
     Display *dpy;
     int screen;
     GLXWindow win;
@@ -148,19 +201,27 @@ gtk_gl_canvas_native_new() {
 }
 
 
-void
-gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+static gboolean
+gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     XWindowAttributes xattrs;
     XVisualInfo template, *vi;
     int count;
 
+    if (native->initialized) return TRUE;
+
     native->dpy = gdk_x11_display_get_xdisplay(gdk_window_get_display(
             priv->win));
 	if (!native->dpy) {
-        g_critical("Unable to get X11 display");
+        g_warning("Unable to get X11 display");
+        return FALSE;
     }
+
+    native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
+            priv->win));
+
+    begin_capture_xerrors();
 
     XGetWindowAttributes(native->dpy, gdk_x11_window_get_xid(priv->win),
             &xattrs);
@@ -170,8 +231,27 @@ gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
     native->visual_info = *vi;
     XFree(vi);
 
-    init_glxew(native->dpy, gdk_x11_screen_get_screen_number(
-            gdk_window_get_screen(priv->win)));
+    if (end_capture_xerrors(native->dpy)) {
+        g_warning("Received X window system error during native canvas"
+            " initialization");
+        return FALSE;
+    }
+
+    if (init_glxew(native->dpy, gdk_x11_screen_get_screen_number(
+            gdk_window_get_screen(priv->win)))) {
+        native->initialized = TRUE;
+    }
+    return native->initialized;
+}
+
+
+void
+gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
+    native->initialized = FALSE;
+    native->dpy = NULL;
     native->screen = 0;
     native->win = 0;
     native->glc = NULL;
@@ -201,11 +281,13 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
     GtkGLVisualList *list;
     size_t i, j;
 
-    assert(native->dpy);
+    assert(canvas);
 
-    if (!glxew_initialized || !GLXEW_VERSION_1_3) {
+    if (!gtk_gl_canvas_init_native(canvas) || !GLXEW_VERSION_1_3) {
         return gtk_gl_visual_list_new(TRUE, 0);
     }
+
+    begin_capture_xerrors();
 
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
@@ -219,6 +301,10 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
                 && visual_type_matches(vtype, native->visual_info.class)) {
             list->entries[j++] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
         }
+    }
+    if (end_capture_xerrors(native->dpy)) {
+        g_warning("Received X window system error during visual enumeration");
+        return gtk_gl_visual_list_new(TRUE, 0);
     }
     list->count = j;
     return list;
@@ -292,20 +378,6 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 }
 
 
-typedef int (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
-static __thread XErrorHandler old_error_handler;
-static __thread XErrorEvent last_error;
-static __thread gboolean have_error;
-
-
-static int
-silent_x_error_handler(Display *dpy, XErrorEvent *ev) {
-    last_error = *ev;
-    have_error = TRUE;
-    return 0;
-}
-
-
 static gboolean
 gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
         GtkGLVisual *visual) {
@@ -314,18 +386,16 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
 
     assert(visual);
     assert(glxew_initialized);
+    assert(native->initialized);
     assert(GLXEW_VERSION_1_3);
 
-    have_error = FALSE;
-    old_error_handler = XSetErrorHandler(silent_x_error_handler);
+    begin_capture_xerrors();
 
-    native->screen = gdk_x11_screen_get_screen_number(gdk_window_get_screen(
-            priv->win));
     native->win = glXCreateWindow(native->dpy, visual->cfg,
             gdk_x11_window_get_xid(priv->win), NULL);
-    if (!native->win) {
+    if (!native->win || have_xerror(native->dpy)) {
         g_warning("glXCreateWindow() failed");
-        XSetErrorHandler(old_error_handler);
+        end_capture_xerrors(native->dpy);
         return FALSE;
     }
     return TRUE;
@@ -351,27 +421,21 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
         failed = TRUE;
     }
 
-    XSync(native->dpy, False);
-
-    if (have_error) {
+    if (end_capture_xerrors(native->dpy)) {
         g_warning("Received X error during context creation");
+        failed = TRUE;
+    }
+
+    if (glewInit() != GLEW_OK) {
+        g_warning("glewInit() failed after context creation");
         failed = TRUE;
     }
 
     if (failed) {
         gtk_gl_canvas_native_destroy_context(canvas);
         native->glc = NULL;
-        XSync(native->dpy, False);
-    }
-
-    XSetErrorHandler(old_error_handler);
-    if (failed) return FALSE;
-
-    if (glewInit() != GLEW_OK) {
-        g_warning("glewInit() failed after context creation");
-        return FALSE;
-    }
-    return TRUE;
+    };
+    return !failed;
 }
 
 
@@ -455,6 +519,8 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 
+    begin_capture_xerrors();
+
     if (native->glc) {
         glXMakeCurrent(native->dpy, native->win, NULL);
 		glXDestroyContext(native->dpy, native->glc);
@@ -466,6 +532,10 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
         }
         glXDestroyWindow(native->dpy, native->win);
         native->win = 0;
+    }
+
+    if (end_capture_xerrors(native->dpy)) {
+        g_warning("Received X window system error during context destruction");
     }
 }
 

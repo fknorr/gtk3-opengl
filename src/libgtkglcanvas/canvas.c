@@ -137,8 +137,6 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
     attributes.width = allocation.width;
     attributes.height = allocation.height;
     attributes.wclass = GDK_INPUT_OUTPUT;
-    attributes.visual = gdk_visual_get_best_with_both(priv->effective_depth,
-            GDK_VISUAL_DIRECT_COLOR);
 
 	if (!attributes.visual) {
 		attributes.visual = gdk_visual_get_system ();
@@ -148,7 +146,7 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
             | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK
             | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK
             | GDK_POINTER_MOTION_HINT_MASK | GDK_SCROLL_MASK;
-    attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+    attributes_mask = GDK_WA_X | GDK_WA_Y;
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, attributes_mask);
     gdk_window_set_user_data(priv->win, wid);
@@ -187,7 +185,6 @@ gtk_gl_canvas_init(GtkGLCanvas *self) {
     gtk_widget_set_can_focus(wid, TRUE);
     gtk_widget_set_receives_default(wid, TRUE);
     gtk_widget_set_has_window(wid, TRUE);
-    gtk_widget_set_double_buffered(wid, FALSE);
 }
 
 
