@@ -17,7 +17,7 @@
  * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "canvas.h"
+#include <gtkgl/canvas.h>
 #include "canvas_impl.h"
 #include <stdlib.h>
 #include <windows.h>
@@ -25,23 +25,25 @@
 #include <gdk/gdkwin32.h>
 #include <glib-object.h>
 #include <GL/gl.h>
-#include <GL/wglext.h>
+#include <GL/glew.h>
+#include <GL/wglew.h>
 
 
 // Returns a human-readable error message  based GetLastError. The result is
 // owned by the caller.
-char *
-format_last_error(void) {
+static void
+warn_last_error(void) {
 	char *ptr;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
             NULL, GetLastError(), 0, (LPSTR) &ptr, 0, NULL);
-	return ptr;
+	g_warning("GetLastError() = %s", ptr);
+	HeapFree(GetProcessHeap(), ptr);
 }
 
 
 // Custom WndProc for the canvas child window, making it transparent to mouse
 // interaction
-LRESULT CALLBACK
+static LRESULT CALLBACK
 w32_canvas_wnd_proc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam) {
     GtkWidget *widget;
 	switch(msg) {
@@ -54,137 +56,117 @@ w32_canvas_wnd_proc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam) {
 }
 
 
-// wglChoosePixelFormatARB is only available via wglGetProcAddress, this pointer
-// holds the dynamically loaded function address.
-static BOOL (*dyn_wglChoosePixelFormatARB)(HDC, GLint*, GLfloat*, GLuint,
-        GLint*, GLuint*);
-
-
-// Sets a DC's pixel format based on GtkGLAttributes via the legacy
-// ChoosePixelFormat API. Used for boot-strapping WGL and as a fallback
-// in case wglChoosePixelFormatARB is not available.
-static gboolean
-set_pixel_format_legacy(HDC dc, const GtkGLAttributes *attrs) {
-	PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        attrs->color_buffer_bits,
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0,
-        attrs->depth_buffer_bits,
-        attrs->stencil_buffer_bits,
-        0,
-        PFD_MAIN_PLANE,
-        0,
-        0, 0, 0
-    };
-	int pf;
-
-	if (attrs->flags & GTK_GL_SAMPLE_BUFFERS) {
-		g_warning("Target does not support sample buffers");
-    }
-
-	return (pf = ChoosePixelFormat(dc, &pfd)) && SetPixelFormat(dc, pf, &pfd);
-}
+static gboolean wglew_initialized = FALSE;
 
 
 // Creates the child-window class and resolves wglChoosePixelFormatARB.
 // Global, a noop except for the first call, and thread-safe.
-static void
-w32_init(void) {
-    static GMutex mutex;
-    static gboolean allocated = FALSE;
+static gboolean
+init_wglew(void) {
+    WNDCLASSEX wnd_class;
+    HWND dummy;
+    gboolean success = FALSE;
+    HDC dc;
+    HGLRC glc;
+	PIXELFORMATDESCRIPTOR pfd;
+	int pf;
 
-    if (allocated) return;
+	if (wglew_initialized) return TRUE;
 
-    g_mutex_lock(&mutex);
-    if (!allocated)     {
-        WNDCLASSEX wnd_class;
-        HWND dummy;
-        gboolean success;
+	// Register class for all GLCanvas windows
+    ZeroMemory(&wnd_class, sizeof(WNDCLASSEX));
+    wnd_class.cbSize = sizeof(WNDCLASSEX);
+    wnd_class.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
+    wnd_class.hCursor = LoadCursor(NULL,IDC_ARROW);
+    wnd_class.hInstance = GetModuleHandle(NULL);
+    wnd_class.lpfnWndProc = w32_canvas_wnd_proc;
+    wnd_class.lpszClassName = "GLCanvas";
+    wnd_class.style = CS_OWNDC; // WGL requires an owned DC
 
-        ZeroMemory(&wnd_class, sizeof(WNDCLASSEX));
-        wnd_class.cbClsExtra = 0;
-        wnd_class.cbSize = sizeof(WNDCLASSEX);
-        wnd_class.cbWndExtra = 0;
-        wnd_class.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-        wnd_class.hCursor = LoadCursor(NULL,IDC_ARROW);
-        wnd_class.hIcon = NULL;
-        wnd_class.hIconSm = NULL;
-        wnd_class.hInstance = GetModuleHandle(NULL);
-        wnd_class.lpfnWndProc = w32_canvas_wnd_proc;
-        wnd_class.lpszClassName = "GLCanvas";
-        wnd_class.lpszMenuName = NULL;
-        wnd_class.style = CS_OWNDC; // WGL requires an owned DC
+    if (!RegisterClassEx(&wnd_class)) {
+		g_warning("Unable to register window class in WGLEW initialization");
+		goto end;
+	}
 
-        if (!RegisterClassEx(&wnd_class)) goto fail;
-        else allocated = TRUE;
+    // Create an invisible window with a dummy GL context in order to
+    // be able to call glewInit()
+    dummy = CreateWindowEx(0, "GLCanvas", "", 0, 0, 0, 10,
+			10, NULL, NULL, GetModuleHandle(NULL), NULL);
+	if (!dummy) {
+		g_warning("Unable to create dummy window in WGLEW initialization");
+		goto end;
+	}
+
+	// Create a GL context
+    if (!(dc = GetDC(dummy))) {
+		g_warning("Unable to retrieve device context in WGLEW initialization");
+		goto free_window;
+	}
+
+	ZeroMemory(&pfd, sizeof pfd);
+	pfd.nSize = sizeof pfd;
+	pfd.nVersion = 1;
+	pfd.dfFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	if (!((pf = ChoosePixelFormat(dc, &pfd)) && SetPixelFormat(dc, pf, &pfd))) {
+		g_warning("Unable to set pixel format in WGLEW initialization");
+		goto free_dc;
+	}
+
+	if (!(glc = wglCreateContext(dc))) {
+		g_warning("Unable to create GL context in WGLEW initialization");
+		goto free_dc;
+	}
+
+	if (!wglMakeCurrent(dc, gl)) {
+		g_warning("Unable to attach context in WGLEW initialization");
+		goto free_glc;
+	}
+
+	if (glewInit() == GLEW_OK) {
+		wglew_initialized = TRUE;
+	} else {
+		g_warning("glewInit() failed in WGLEW initialization");
+	}
+
+free_glc:
+    wglMakeCurrent(dc, NULL);
+    wglDeleteContext(glc);
+
+free_dc:
+    ReleaseDC(dummy, dc);
+
+free_window:
+    DestroyWindow(dummy);
+
+end:
+	if (!wglew_initialized) warn_last_error();
+	return wglew_initialized;
+}
 
 
-        // Create an invisible window with a dummy GL context in order to
-        // be able to call wglGetProcAddress
+struct _GtkGLVisual {
+	int pf;
+};
 
-        dummy = CreateWindowEx(0, "GLCanvas", "", 0, 0, 0, 10, 10, NULL, NULL,
-                GetModuleHandle(NULL), NULL);
 
-        if (dummy) {
-            HDC dc;
-            HGLRC gl;
-            GtkGLAttributes attrs;
+static GtkGLVisual *
+gtk_gl_visual_new(int pf) {
+    GtkGLVisual visual = { pf };
+    return g_memdup(&visual, sizeof visual);
+}
 
-            // These should be settings that will work on practically any
-            // hardware supporting OpenGL - may have to be changed.
-            attrs.flags = 0;
-            attrs.num_samples = 0;
-            attrs.color_buffer_bits = 16;
-            attrs.depth_buffer_bits = 8;
-            attrs.stencil_buffer_bits = 0;
 
-            // Create a GL context
-            success = (dc = GetDC(dummy))
-                && set_pixel_format_legacy(dc, &attrs)
-                && (gl = wglCreateContext(dc))
-                && wglMakeCurrent(dc, gl);
-
-            // wglChoosePixelFormatARB may not be available - this is not an
-            // error, instead create_context will fall back to the
-            // ChoosePixelFormat API.
-            dyn_wglChoosePixelFormatARB
-                = (void*) wglGetProcAddress("wglChoosePixelFormatARB");
-
-            if (!success) goto fail;
-
-            // Destroy context and dummy window
-            wglMakeCurrent(dc, NULL);
-            wglDeleteContext(gl);
-            ReleaseDC(dummy, dc);
-        }
-
-        DestroyWindow(dummy);
-    }
-    goto cleanup;
-
-fail:
-    {
-        char *error = format_last_error();
-        g_error(error);
-        free(error);
-    }
-
-cleanup:
-    g_mutex_unlock(&mutex);
+void
+gtk_gl_visual_free(GtkGLVisual *visual) {
+    g_free(visual);
 }
 
 
 struct _GtkGLCanvas_NativePriv {
-    HWND canvas;  // The canvas child window
+    HWND win;  // The canvas child window
 	HDC dc;
-    HGLRC gl;
+    HGLRC glc;
 };
 
 
@@ -235,73 +217,273 @@ on_size_allocate(GtkWidget *widget, GdkRectangle *rect, gpointer user) {
     // When the child window fills the widget, the widget does not receive
     // paint events. As a workaround, the child is made 1px smaller than
     // the parent. This is a workaround that should be resolved correctly.
-    if (priv->native->canvas) {
-        SetWindowPos(priv->native->canvas, NULL, 0, 0, rect->width,
+    if (priv->native->win) {
+        SetWindowPos(priv->native->win, NULL, 0, 0, rect->width,
                 rect->height-1, 0);
     }
 }
 
 
-gboolean
-gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
-        const GtkGLAttributes *attrs) {
+static void
+destroy_child_window(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-	HWND hwnd = GDK_WINDOW_HWND(gtk_widget_get_window(GTK_WIDGET(canvas)));
-	HDC dc = NULL;
-	gboolean success = FALSE;
-    RECT client_rect;
 
-    w32_init();
+	if (native->dc) {
+		ReleaseDC(native->dc);
+		native->dc = NULL;
+	}
+	if (native->win) {
+		DestroyWindow(native->win);
+		native->win = NULL;
+	}
+}
 
-    /* The user should be able to destroy and re-create contexts on the same
-     * widget multiple times with different parameters, e.g. to "restart" GL
-     * with different MSAA settings.
-     * However, Windows only allows the PixelFormat to be set once for each
-     * window, so the only way to achieve this to create a child window
-     * inside the canvas which is created and destroyed along with the context.
-     * We try to make it transparent to user interaction so that the parent
-     * window (our GtkGLCanvas) will receive all events passed to the child
-     * window.
-     */
 
+static void
+create_child_window(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+	HWND parent;
+	RECT client_rect;
+
+	hwnd = GDK_WINDOW_HWND(gtk_widget_get_window(GTK_WIDGET(canvas)));
     GetClientRect(hwnd, &client_rect);
-    native->canvas = CreateWindowEx(0, //WS_EX_TRANSPARENT,
-        "GLCanvas",
-        "",
-        WS_VISIBLE | WS_CHILD,
-        client_rect.left,
-        client_rect.top,
-        client_rect.right,
-        client_rect.bottom-1, // See on_size_allocate
-        hwnd,
-        NULL,
-        GetModuleHandle(NULL),
-        NULL);
+	native->win = CreateWindowEx(0, "GLCanvas", "", WS_VISIBLE | WS_CHILD,
+        	client_rect.left, client_rect.top, client_rect.right,
+        	client_rect.bottom-1, /*See on_size_allocate*/, parent, NULL,
+        	GetModuleHandle(NULL), NULL);
+	if (!native->win) {
+		g_warning("Unable to create child window for canvas");
+		warn_last_error();
+		return;
+	}
 
-    if (!native->canvas) {
-        g_error("Creating native canvas window failed");
+	native->dc = GetDC(native->win);
+	if (!native->dc) {
+		g_warning("Unable to get DC for canvas child window");
+		warn_last_error();
+		destroy_child_window();
+	}
+}
+
+
+
+void
+gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+	native->win = NULL;
+	native->dc = NULL;
+	native->glc = NULL;
+    g_signal_connect(GTK_WIDGET(canvas), "size-allocate",
+        G_CALLBACK(on_size_allocate), NULL);
+}
+
+
+void
+gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
+	destroy_child_window(canvas);
+}
+
+
+#define MAX_NFORMATS 1000
+
+GtkGLVisualList *
+gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
+	static const int iattribs[] = {
+	 		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+			WGL_SUPPORT_OPENGL_ARB, GL_TRUE
+	};
+	static const float fattribs[] = { 0 };
+
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+	int *formats;
+	UINT n_formats, i;
+	GtkGLVisualList *list;
+
+	if (!wglew_init()) {
+		g_warning("Unable to initialize WGLEW, returning empty visual list");
+		return gtk_gl_visual_list_new(FALSE, 0);
+	}
+
+	if (!native->win) {
+		create_child_window(canvas);
+	}
+
+	if (!native->dc) {
+		g_warning("Canvas does not have a child window DC, returning "
+				"empty visual list");
+		return gtk_gl_visual_list_new(FALSE, 0);
+	}
+
+	formats = g_malloc(MAX_NFORMATS * sizeof *formats);
+	if (!WGLEW_ARB_pixel_format || !wglChoosePixelFormatARB(native->dc,
+			iattribs, fattribs, MAX_NFORMATS, formats, &n_formats)) {
+		g_warning("Unable to wglChoosePixelFormatARB(), returning "
+				"empty visual list");
+		warn_last_error();
+		return gtk_gl_visual_list_new(FALSE, 0);
+	}
+
+	list = gtk_gl_visual_list_new(TRUE, n_formats);
+	for (i = 0; i < n_formats; ++i) {
+		list->entries[i] = gtk_gl_visual_new(formats[i]);
+	}
+	return list;
+}
+
+
+static gboolean
+gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual *visual) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+	assert(visual);
+
+    if (wglew_initialized) {
+		g_warning("WGLEW not initialized, aborting context creation");
+		return FALSE;
+	}
+
+	if (!native->win) {
+		create_child_window(canvas);
+	}
+
+	if (!native->dc) {
+		g_warning("Canvas does not have a child window DC, aborting context "
+				"creation");
+		return FALSE;
+	}
+
+	if (!SetPixelFormat(native->dc, visual->pf, NULL)) {
+		g_warning("Unable to set pixel format, aborting context creation");
+		warn_last_error();
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+static gboolean
+gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
+        GtkGLVisual *visual) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+
+	if(!native->glc) {
+		g_warning("Unable to create GL context");
+		warn_last_error();
+		return FALSE;
+	}
+
+	if (wglMakeCurrent(native->dc, native->glc)) {
+		g_warning("Unable to attach context");
+		warn_last_error();
+		gtk_gl_canvas_native_destroy_context(canvas);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+gboolean
+gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
+        const GtkGLVisual *visual) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+	gboolean success = FALSE;
+
+	if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
+		return FALSE;
+	}
+	native->glc = wglCreateContext(dc);
+	return gtk_gl_canvas_native_after_create_context(canvas, visual);
+}
+
+
+gboolean
+gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
+        GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        GtkGLProfile profile) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+    const char *cxt_version;
+    unsigned cxt_major, cxt_minor;
+
+    if ((ver_major < 3 || (ver_major == 3 && ver_minor == 0))
+            && (profile == GTK_GL_CORE_PROFILE
+                || profile == GTK_GL_COMPATIBILITY_PROFILE)) {
+        // Use legacy function for legacy contexts
+        if (!gtk_gl_canvas_native_create_context(canvas, visual)) {
+            return FALSE;
+        }
+    } else if (WGLEW_ARB_create_context) {
+        /* (Core) contexts > 3.0 cannot be created via the legacy
+         * wglCreateContext because the deprecation functionality requires
+         * specification of the target version.
+         */
+        int attrib_list[] = {
+                WGL_CONTEXT_MAJOR_VERSION_ARB, ver_major,
+                WGL_CONTEXT_MINOR_VERSION_ARB, ver_minor,
+                0, 0, 0
+        };
+        /* OpenGL 3.1 does not know about compatibility profiles, so
+         * compatibility is checked later via GLEW_ARB_compatibility in that
+         * case
+         */
+        if (WGL_ARB_create_context_profile) {
+            attrib_list[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
+            switch (profile) {
+                case GTK_GL_CORE_PROFILE:
+                    attrib_list[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+                    break;
+
+                case GTK_GL_COMPATIBILITY_PROFILE:
+                    attrib_list[5] = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+                    break;
+
+                case GTK_GL_ES_PROFILE:
+                    if (!WGL_EXT_create_context_es_profile) return FALSE;
+                    attrib_list[5] = WGL_CONTEXT_ES_PROFILE_BIT_EXT;
+                    break;
+
+                default:
+                    return FALSE;
+            }
+        };
+
+        if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
+            return FALSE;
+        }
+        native->glc = wglCreateContextAttribsARB(native->dc, NULL, attrib_list
+        if (!gtk_gl_canvas_native_after_create_context(canvas, visual)) {
+            return FALSE;
+        }
+    } else {
         return FALSE;
     }
 
-    g_signal_connect(GTK_WIDGET(canvas), "size-allocate",
-        G_CALLBACK(on_size_allocate), NULL);
-
-    // Released in destroy_context
-    dc = GetDC(native->canvas);
-	native->dc = dc;
-
-    if (dc) {
-        // Try wglChoosePixelFormatARB; if that fails, ChoosePixelFormat
-        success =  (set_pixel_format_arb(dc, attrs)
-                || set_pixel_format_legacy(dc, attrs))
-            && (native->gl = wglCreateContext(dc))
-            && wglMakeCurrent(dc, native->gl);
+    /* Verify the correct context version (the legacy wglCreateContext may or
+     * may not return a context with the required version, and an OpenGL 3.1
+     * context may not support the compatibility mode even if requested (see
+     * above).
+     */
+    cxt_version = (const char*) glGetString(GL_VERSION);
+    if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2) {
+        if (cxt_major < ver_major
+                || (cxt_major == ver_major && cxt_minor < ver_minor)) {
+            return FALSE;
+        }
+        if (cxt_major == 3 && cxt_minor == 1
+                && profile == GTK_GL_COMPATIBILITY_PROFILE
+                && !GLEW_ARB_compatibility) {
+            return FALSE;
+        }
+        return TRUE;
     }
 
-	if (!success) priv->error_msg = format_last_error();
-
-	return success;
+    gtk_gl_canvas_native_destroy_context(canvas);
+    return FALSE;
 }
 
 
@@ -310,18 +492,14 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 
-    if (native->dc && native->gl) {
-		wglMakeCurrent(native->dc, NULL);
-		wglDeleteContext(native->gl);
-		ReleaseDC(NULL, native->dc);
-		native->gl = NULL;
-		native->dc = NULL;
-    }
+    if (!native->glc) return;
+	assert(native->dc);
 
-    if (native->canvas) {
-        DestroyWindow(native->canvas);
-        native->canvas = NULL;
-    }
+	wglMakeCurrent(native->dc, NULL);
+	wglDeleteContext(native->glc);
+	native->glc = NULL;
+
+	destroy_child_window(canvas);
 }
 
 
@@ -329,7 +507,10 @@ void
 gtk_gl_canvas_native_make_current(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    wglMakeCurrent(native->dc, native->gl);
+	if (native->glc) {
+		assert(native->dc);
+    	wglMakeCurrent(native->dc, native->glc);
+	}
 }
 
 
@@ -337,26 +518,8 @@ void
 gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    wglSwapLayerBuffers(native->dc, WGL_SWAP_MAIN_PLANE);
-}
-
-
-GtkGLSupport
-gtk_gl_query_feature_support(GtkGLFeature feature) {
-    w32_init();
-
-    switch (feature)
-    {
-        case GTK_GL_DOUBLE_BUFFERED:
-        case GTK_GL_STEREO:
-            return GTK_GL_FULLY_SUPPORTED;
-
-        case GTK_GL_SAMPLE_BUFFERS:
-            // Only wglChoosePixelFormatARB supports Multisampling
-            return dyn_wglChoosePixelFormatARB
-                ? GTK_GL_FULLY_SUPPORTED : GTK_GL_UNSUPPORTED;
-
-        default:
-            return GTK_GL_UNSUPPORTED;
-    }
+	if (native->glc) {
+		assert(native->dc);
+    	wglSwapLayerBuffers(native->dc, WGL_SWAP_MAIN_PLANE);
+	}
 }

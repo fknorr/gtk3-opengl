@@ -167,6 +167,8 @@ gtk_gl_canvas_unrealize(GtkWidget *wid) {
 		priv->is_dummy = TRUE;
 	}
 
+    gtk_gl_canvas_native_unrealize(wid);
+
     GTK_WIDGET_CLASS(gtk_gl_canvas_parent_class)->unrealize(wid);
 }
 

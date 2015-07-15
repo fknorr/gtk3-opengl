@@ -281,6 +281,12 @@ gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
 }
 
 
+void
+gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
+
+}
+
+
 static gboolean
 visual_type_matches(int glx, int x) {
     switch (glx) {
