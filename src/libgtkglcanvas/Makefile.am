@@ -39,12 +39,16 @@ gtkgl_HEADERS = \
     $(top_srcdir)/include/gtkgl/visual.h
 
 if HAVE_GLADEUI
-gladedir = $(GLADEUI_CATDIR)
-glade_DATA = gtkglcanvas.xml
+gladecatdir = $(GLADEUI_CATDIR)
+gladecat_DATA = $(top_srcdir)/res/glade/catalogs/gtkglcanvas.xml
+gladepix22dir = $(GLADEUI_PIXMAPDIR)/hicolor/22x22/actions/
+gladepix22_DATA = $(top_srcdir)/res/glade/pixmaps/22x22/widget-gtkgl-glcanvas.png
+gladepix16dir = $(GLADEUI_PIXMAPDIR)/hicolor/16x16/actions/
+gladepix16_DATA = $(top_srcdir)/res/glade/pixmaps/16x16/widget-gtkgl-glcanvas.png
 endif
 
 gtkglcanvas.pc:
-	sed "s!%!$(prefix)!" $(srcdir)/gtkglcanvas.pc.tmpl > gtkglcanvas.pc
+	sed "s!%!$(prefix)!" $(top_srcdir)/res/gtkglcanvas/gtkglcanvas.pc.tmpl > gtkglcanvas.pc
 
 pkgconfigdir = $(PKG_CONFIG_DIR)
 pkgconfig_DATA = gtkglcanvas.pc

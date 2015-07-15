@@ -142,9 +142,9 @@ init_context(void) {
 	if (has_shaders || has_vaos) {
 	    program = glCreateProgram();
 	    compile_attach_shader(program, GL_VERTEX_SHADER,
-				"src/example/vertex.glsl");
+				"res/example/vertex.glsl");
 	    compile_attach_shader(program, GL_FRAGMENT_SHADER,
-				"src/example/fragment.glsl");
+				"res/example/fragment.glsl");
 	    glLinkProgram(program);
 	    glValidateProgram(program);
 
@@ -496,7 +496,7 @@ main(int argc, char *argv[]) {
 	gtk_init(&argc, &argv);
 
 	builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, "src/example/example.ui", &error);
+	gtk_builder_add_from_file(builder, "res/example/example.ui", &error);
 	if (error) g_error("%s", error->message);
 
 	gtk_builder_connect_signals(builder, NULL);

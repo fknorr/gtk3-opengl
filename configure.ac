@@ -36,7 +36,9 @@ PKG_CHECK_MODULES([GLEW], [glew], [],
     [AC_MSG_ERROR([Missing dependency: libGLEW])])
 
 PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
-    [have_glade=yes; ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`],
+    [have_glade=yes;
+        ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`;
+        ac_gladeui_pixmapdir=`$PKG_CONFIG --variable=pixmapdir gladeui-2.0`],
     [ac_gladeui_catdir=; have_glade=no])
 
 
@@ -76,6 +78,7 @@ AC_DEFINE_UNQUOTED([PREFIX], ["$prefix"], [Installation Prefix])
 AC_DEFINE_UNQUOTED([SOURCE_DIR], ["$srcdir"], [Absolute Source Directory])
 
 AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
+AC_SUBST(GLADEUI_PIXMAPDIR, "$ac_gladeui_pixmapdir")
 
 pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s/'//gp;q;}"`"
 AC_SUBST(PKG_CONFIG_DIR, "$pkgconfig_dir")
