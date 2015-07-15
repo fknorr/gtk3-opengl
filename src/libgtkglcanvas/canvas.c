@@ -129,7 +129,7 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
     gtk_widget_set_realized(wid, TRUE);
     gtk_widget_get_allocation(wid, &allocation);
 
-	priv->effective_depth = 24;
+    // Create a GDK window to use as a parent for the actual context windows
 
     attributes.window_type = GDK_WINDOW_CHILD;
     attributes.x = allocation.x;
@@ -137,10 +137,6 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
     attributes.width = allocation.width;
     attributes.height = allocation.height;
     attributes.wclass = GDK_INPUT_OUTPUT;
-
-	if (!attributes.visual) {
-		attributes.visual = gdk_visual_get_system ();
-    }
 
 	attributes.event_mask = gtk_widget_get_events(wid)
             | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK
@@ -304,6 +300,7 @@ gtk_gl_canvas_display_frame(GtkGLCanvas *wid) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
 	g_assert(!priv->is_dummy);
 
+    // priv->double_buffered is set by the backend
     if (priv->double_buffered) {
         gtk_gl_canvas_native_swap_buffers(wid);
     } else {

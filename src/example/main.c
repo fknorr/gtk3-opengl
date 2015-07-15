@@ -25,7 +25,7 @@
 #include <math.h>
 
 
-static gboolean running = TRUE;
+// Widgets as fetched from the GtkBuilder
 static GtkWidget *window;
 static GtkListStore *visual_list_store;
 static GtkDialog *chooser;
@@ -36,29 +36,37 @@ static GtkAdjustment *major_adjust, *minor_adjust;
 static GtkComboBox *profile_combo;
 static GtkButton *create_button, *destroy_button, *start_button, *stop_button;
 
+// Whether the animation is running
+static gboolean running = TRUE;
+// The current object rotation
 static float angle = 0.f;
 
+// Drawing modes supported by the active context
+// direct_mode: Drawing a triangle with glBegin() / glEnd()
+// shaders: Drawing a rectangle with shaders and VBOs
+// vaos: Drawing a hexagon with shaders, VBOs and Vertex Array Objects
 static gboolean has_direct_mode, has_shaders, has_vaos;
-static GLuint program, rect_vertex_buffer, rect_index_buffer;
-static GLuint hex_vertex_buffer, hex_index_buffer, hex_vao;
-static GLuint projection_loc, modelview_loc, pos_loc, color_loc;
 
-static void
-message_box_response(GtkDialog *dialog) {
-	gtk_widget_destroy(GTK_WIDGET(dialog));
-}
+// The shader program used by draw_with_shaders() and draw_with_vaos()
+static GLuint program;
+// Buffers for draw_with_shaders()
+static GLuint rect_vertex_buffer, rect_index_buffer;
+// Buffers for draw_with_vaos()
+static GLuint hex_vertex_buffer, hex_index_buffer, hex_vao;
+// Uniform / attribute locations in "program"
+static GLuint projection_loc, modelview_loc, pos_loc, color_loc;
 
 
 static void
 message_box(int type, const char *msg) {
 	GtkWidget *dlg = gtk_message_dialog_new(GTK_WINDOW(window),
             GTK_DIALOG_MODAL, type, GTK_BUTTONS_OK, "%s", msg);
-	g_signal_connect(G_OBJECT(dlg), "response",
-            G_CALLBACK(message_box_response), NULL);
 	gtk_dialog_run(GTK_DIALOG(dlg));
+	gtk_widget_destroy(dlg);
 }
 
 
+// Handler for the "start animation" button
 gboolean
 example_start_animation(void) {
 	if (!gtk_gl_canvas_has_context(canvas)) {
@@ -70,6 +78,7 @@ example_start_animation(void) {
 }
 
 
+// Handler for the "stop animation" button
 gboolean
 example_stop_animation(void) {
     running = FALSE;
@@ -77,6 +86,7 @@ example_stop_animation(void) {
 }
 
 
+// Animation function called by g_timeout_add_full()
 static gboolean
 example_animate(gpointer ud) {
     if (running) {
@@ -90,6 +100,8 @@ example_animate(gpointer ud) {
 gboolean example_destroy_context(void);
 
 
+// Loads a shader from file, compiles it, attaches it to a shader program
+// and reports any errors via a message box.
 static void
 compile_attach_shader(GLuint program, GLenum type, const char *file) {
     GLuint shader = glCreateShader(type);
@@ -123,9 +135,17 @@ compile_attach_shader(GLuint program, GLenum type, const char *file) {
 }
 
 
+// Initializes a fresh OpenGL context, deciding available drawing modes and
+// loading all required buffers
 static void
 init_context(void) {
 	GLint mask;
+
+	/* We're in a compatibility context if either
+	 * 	 - Version < 3.1 or
+	 *   - Version = 3.1 and GL_ARB_compatibility is supported or
+	 *   - Version > 3.1 and GL_CONTEXT_COMPATIBILITY_PROFILE_BIT is set
+	 */
 	gboolean compatibility_context
 	 		= !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
 	if (!compatibility_context) {
@@ -155,6 +175,7 @@ init_context(void) {
 	}
 
 	if (has_shaders) {
+		// Create VBOSs for rectangle
 		static const GLfloat rect_verts[] = {
 	 	//       x   y      R  G  B
 				-1,  1,		1, 0, 0,
@@ -178,6 +199,7 @@ init_context(void) {
 	}
 
 	if (has_vaos) {
+		// Create VBOs / VAO for hexagon
 		static const GLfloat
 #define SN 0.866025f
 #define CS 0.5f
@@ -219,6 +241,7 @@ init_context(void) {
 }
 
 
+// Frees any buffers and shaders allocated by init_context()
 static void
 cleanup_context(void) {
 	if (has_vaos) {
@@ -242,6 +265,7 @@ cleanup_context(void) {
 }
 
 
+// Draws a triangle with glBegin() / glEnd()
 static void
 draw_direct_mode(float aspect) {
 	glMatrixMode(GL_PROJECTION);
@@ -264,6 +288,7 @@ draw_direct_mode(float aspect) {
 }
 
 
+// Loads the shader program and initializes uniforms
 static void
 begin_draw_with_shaders(float aspect, float scale) {
 	float projection[16] = {
@@ -288,12 +313,14 @@ begin_draw_with_shaders(float aspect, float scale) {
 }
 
 
+// Unloads the shader program
 static void
 end_draw_with_shaders(void) {
 	glUseProgram(0);
 }
 
 
+// Drawas a rectangle with shaders VBOs
 static void
 draw_with_shaders(float aspect) {
 	begin_draw_with_shaders(aspect, 0.6f);
@@ -314,6 +341,7 @@ draw_with_shaders(float aspect) {
 }
 
 
+// Draws a hexagon with VBOs and a vertex array object
 static void
 draw_with_vaos(float aspect) {
 	begin_draw_with_shaders(aspect, 0.75f);
@@ -328,6 +356,7 @@ draw_with_vaos(float aspect) {
 }
 
 
+// Handler for the canvas' "draw" event
 gboolean
 example_draw(void) {
 	GtkAllocation alloc;
@@ -363,11 +392,13 @@ example_draw(void) {
 		draw_with_vaos(aspect);
 	}
 
+	// Either swap buffers or flush, depending on the existance of a back buffer
 	gtk_gl_canvas_display_frame(canvas);
 	return TRUE;
 }
 
 
+// Updates the context-info-label on the bottom left of the window
 static void
 update_context_info(void) {
 	gboolean present = gtk_gl_canvas_has_context(canvas);
@@ -387,11 +418,14 @@ update_context_info(void) {
 }
 
 
+// Handler for the "Create context..." button
 gboolean
 example_create_context(void) {
 	if (gtk_gl_canvas_has_context(canvas)) {
 		message_box(GTK_MESSAGE_ERROR, "Context exists already");
     } else {
+		// Initialize the context chooser dialog with existing visuals
+
 		GtkGLVisualList *visuals = gtk_gl_canvas_enumerate_visuals(canvas);
 		size_t i;
 		GtkTreeIter iter;
@@ -431,9 +465,11 @@ example_create_context(void) {
 				-1);
 		}
 
+		// Show the chooser dialog
 		gtk_dialog_run(chooser);
 		gtk_widget_hide(GTK_WIDGET(chooser));
 
+		// Get the entry of the selected index, or 0 if none was selected
 		i = 0;
 		if (gtk_tree_selection_get_selected(visual_selection, NULL, &iter)) {
 			char *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(
@@ -442,6 +478,7 @@ example_create_context(void) {
 			g_free(path);
 		}
 
+		// Get the version and profile values from the spin / combo boxes
 		ver_major = (unsigned) gtk_adjustment_get_value(major_adjust);
 		ver_minor = (unsigned) gtk_adjustment_get_value(minor_adjust);
 		switch (gtk_combo_box_get_active(profile_combo)) {
@@ -450,6 +487,7 @@ example_create_context(void) {
 			case 2: profile = GTK_GL_ES_PROFILE; break;
 		}
 
+		// Try creating and initializing a context
 		if (gtk_gl_canvas_create_context_with_version(canvas,
 				visuals->entries[i], ver_major, ver_minor, profile)) {
 			init_context();
@@ -466,6 +504,7 @@ example_create_context(void) {
 }
 
 
+// Handler for the "Destroy context" button
 gboolean
 example_destroy_context(void) {
 	if (!gtk_gl_canvas_has_context(canvas)) {
@@ -482,17 +521,11 @@ example_destroy_context(void) {
 }
 
 
-gboolean
-example_check_context(void) {
-	const char *msg = gtk_gl_canvas_has_context(canvas)
-		? "I have a context" : "I don't have a context";
-	message_box(GTK_MESSAGE_INFO, msg);
-	return FALSE;
-}
 
-
+// Handler for the canvas' motion-notify event
 gboolean
 example_mouse_move(GtkWidget *widget, GdkEventMotion *ev) {
+	// Update the bottom-right mouse-info-label
 	char *text = g_strdup_printf("Mouse at (%d, %d)", (int) ev->x, (int) ev->y);
 	gtk_label_set_text(mouse_info_label, text);
 	g_free(text);
@@ -500,8 +533,10 @@ example_mouse_move(GtkWidget *widget, GdkEventMotion *ev) {
 }
 
 
+// Handler for the canvas' leave-notify event
 gboolean
 example_mouse_leave(GtkWidget *widget, GdkEventCrossing *ev) {
+	// Clear the bottom-right mouse-info-label
 	gtk_label_set_text(mouse_info_label, "");
 	return FALSE;
 }
@@ -546,6 +581,8 @@ main(int argc, char *argv[]) {
 	gtk_widget_show_all(window);
 	g_object_unref(builder);
 
+	// Start animation function, "running" determines if anything is actually
+	// animated
 	running = FALSE;
 	g_timeout_add_full(1000, 10, example_animate, 0, 0);
 

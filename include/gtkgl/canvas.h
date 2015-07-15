@@ -69,9 +69,17 @@ G_BEGIN_DECLS
         GtkGLCanvasClass))
 
 
+/// An OpenGL context profile as available in OpenGL versions > 3.0
 typedef enum _GtkGLProfile {
+    /// The core profile, only supporting non-deprecated features
     GTK_GL_CORE_PROFILE,
+
+    /// The compatibility profile, supporting both non-deprecated and
+    /// deprecated features
     GTK_GL_COMPATIBILITY_PROFILE,
+
+    /// The OpenGL ES profile, supporting only features in the OpenGL ES
+    /// specification
     GTK_GL_ES_PROFILE
 } GtkGLProfile;
 
@@ -109,6 +117,9 @@ GtkGLVisualList *gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas);
  * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
  * current to the calling thread.
  *
+ * This function can not create core profile contexts with an OpenGL version
+ * > 3.0.
+ *
  * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
  * returns the error message.
  *
@@ -124,6 +135,8 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
  * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
  * current to the calling thread. Unlike gtk_gl_canvas_create_context, this
  * function allows the user to specify the desired GL version and profile.
+ *
+ * Use this function to create contexts with an OpenGL version > 3.0.
  *
  * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
  * returns the error message.

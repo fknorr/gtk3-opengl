@@ -60,10 +60,18 @@
 #include "canvas_impl.h"
 
 
-
+// Whether init_glxew has run (only required once)
 static gboolean glxew_initialized = FALSE;
 
 
+/* X Error handling routines:
+ * X generates errors asynchronously, and a single error will usually terminate
+ * the application. GLX functions may generate X Errors if a non-existing
+ * context type was requested or a visual does not match the context - things
+ * we cannot detect in advance.
+ * To allow the gtk_gl_* functions to handle X Errors gracefully, they can be
+ * "muted" via begin_capture_xerrors() / end_capture_xerrors().
+ */
 typedef int (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
 static XErrorHandler old_xerror_handler;
 static XErrorEvent last_xerror;
@@ -94,6 +102,7 @@ have_xerror(Display *dpy) {
 }
 
 
+// Ends muting of X Errors, returning whether there was an error
 static gboolean
 end_capture_xerrors(Display *dpy) {
     gboolean had_xerror = have_xerror(dpy);
@@ -103,6 +112,9 @@ end_capture_xerrors(Display *dpy) {
 }
 
 
+/* Creates a dummy context to call glewInit() on in order to initialize
+ * GLEW variables and function for using GLX extensions.
+ */
 static gboolean
 init_glxew(Display *dpy, int screen) {
     static int attr_sets[][3] = {
@@ -124,7 +136,6 @@ init_glxew(Display *dpy, int screen) {
     assert(dpy);
     begin_capture_xerrors();
 
-    // Create dummy context to call glewInit() on
     if (!glXQueryExtension(dpy, &erb, &evb) || have_xerror(dpy)) goto end;
 
     for (i = 0; i < 4; ++i) {
@@ -166,6 +177,7 @@ end:
 }
 
 
+// Describes a X visual for create_context / describe_visual.
 struct _GtkGLVisual {
     Display *dpy;
     GLXFBConfig cfg;
@@ -186,11 +198,20 @@ gtk_gl_visual_free(GtkGLVisual *visual) {
 
 
 struct _GtkGLCanvas_NativePriv {
+    // Whether the struct has been initialized (in init_native())
     gboolean initialized;
+
+    // "Location" of the GtkGLCanvas X window
     Display *dpy;
     int screen;
+
+    // The GLX window (residing inside the GtkGLCanvas window)
     GLXWindow win;
+
+    // The context once created
     GLXContext glc;
+
+    // The XVisualInfo of the GtkGLCanvas window
     XVisualInfo visual_info;
 };
 
@@ -223,6 +244,8 @@ gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
 
     begin_capture_xerrors();
 
+    // Get the XVIsualInfo of the GtkGLCanvas window in order to compare
+    // the visual type later
     XGetWindowAttributes(native->dpy, gdk_x11_window_get_xid(priv->win),
             &xattrs);
     template.visualid = XVisualIDFromVisual(xattrs.visual);
@@ -289,6 +312,11 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
     begin_capture_xerrors();
 
+    /* Get a list of GLXFBConfigs, check for:
+     *   - Ability to render to an X window
+     *   - Correct visual type (must match the parent GtkGLCanvas window)
+     * and insert matching configs into the visual list
+     */
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
     for (i = 0, j = 0; i < list->count; ++i) {
@@ -391,6 +419,11 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
 
     begin_capture_xerrors();
 
+    /* For each context creation a new GLX window must be constructed - once the
+     * visual is pinned down, it cannot be changed. Just using the GtkGLCanvas
+     * window would crash upon creating a second context with a different
+     * lisual
+     */
     native->win = glXCreateWindow(native->dpy, visual->cfg,
             gdk_x11_window_get_xid(priv->win), NULL);
     if (!native->win || have_xerror(native->dpy)) {
@@ -412,6 +445,8 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 
     if (!native->glc) return FALSE;
 
+    // Required for deciding between glFlush() and swap_buffers() in
+    // display_frame()
     glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
             &attrib);
     priv->double_buffered = (unsigned) attrib;
@@ -426,6 +461,8 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
         failed = TRUE;
     }
 
+    // Do glewInit() again in order to get the correct function pointers
+    // for the created context
     if (glewInit() != GLEW_OK) {
         g_warning("glewInit() failed after context creation");
         failed = TRUE;
@@ -455,6 +492,7 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
         g_error("Unable to get X visual form GtkGLVisual");
         return FALSE;
     }
+    // Create legacy context
     native->glc = glXCreateContext(native->dpy, vi, NULL, GL_TRUE);
     XFree(vi);
 
@@ -474,15 +512,24 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
     if ((ver_major < 3 || (ver_major == 3 && ver_minor == 0))
             && (profile == GTK_GL_CORE_PROFILE
                 || profile == GTK_GL_COMPATIBILITY_PROFILE)) {
+        // Use legacy function for legacy contexts
         if (!gtk_gl_canvas_native_create_context(canvas, visual)) {
             return FALSE;
         }
     } else if (GLXEW_ARB_create_context) {
+        /* (Core) contexts > 3.0 cannot be created via the legacy
+         * glXCreateContext because the deprecation functionality requires
+         * specification of the target version.
+         */
         int attrib_list[] = {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, ver_major,
                 GLX_CONTEXT_MINOR_VERSION_ARB, ver_minor,
                 None, None, None
         };
+        /* OpenGL 3.1 does not know about compatibility profiles, so
+         * compatibility is checked later via GLEW_ARB_compatibility in that
+         * case
+         */
         if (GLXEW_ARB_create_context_profile) {
             attrib_list[4] = GLX_CONTEXT_PROFILE_MASK_ARB;
             switch (profile) {
@@ -516,6 +563,11 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         return FALSE;
     }
 
+    /* Verify the correct context version (the legacy glXCreateContext may or
+     * may not return a context with the required version, and an OpenGL 3.1
+     * context may not support the compatibility mode even if requested (see
+     * above).
+     */
     cxt_version = (const char*) glGetString(GL_VERSION);
     if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2) {
         if (cxt_major < ver_major
@@ -543,11 +595,13 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
     begin_capture_xerrors();
 
     if (native->glc) {
+        // Context is not destroyed until it is no longer current
         glXMakeCurrent(native->dpy, native->win, NULL);
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
     }
     if (native->win) {
+        // See the GLX_MESA_release_buffers docs
         if (GLXEW_MESA_release_buffers) {
             glXReleaseBuffersMESA(native->dpy, native->win);
         }

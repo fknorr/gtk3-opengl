@@ -31,7 +31,6 @@ struct _GtkGLCanvas_Priv {
 	GtkGLCanvas_NativePriv *native;
 	gboolean is_dummy;
     gboolean double_buffered;
-	unsigned effective_depth;
 };
 
 
