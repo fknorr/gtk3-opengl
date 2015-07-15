@@ -146,13 +146,14 @@ end:
 
 
 struct _GtkGLVisual {
+	HDC dc;
 	int pf;
 };
 
 
 static GtkGLVisual *
-gtk_gl_visual_new(int pf) {
-    GtkGLVisual visual = { pf };
+gtk_gl_visual_new(HDC dc, int pf) {
+    GtkGLVisual visual = { dc, pf };
     return g_memdup(&visual, sizeof visual);
 }
 
@@ -173,38 +174,6 @@ struct _GtkGLCanvas_NativePriv {
 GtkGLCanvas_NativePriv*
 gtk_gl_canvas_native_new() {
 	return g_malloc0(sizeof(GtkGLCanvas_NativePriv));
-}
-
-
-// Sets a DC's pixel format via wglChoosePixelFromatARB if available
-static gboolean
-set_pixel_format_arb(HDC dc, const GtkGLAttributes *attrs) {
-	GLint iattribs[] = {
-		WGL_DOUBLE_BUFFER_ARB,
-            ((attrs->flags & GTK_GL_DOUBLE_BUFFERED) ? GL_TRUE : GL_FALSE),
-		WGL_STEREO_ARB, ((attrs->flags & GTK_GL_STEREO) ? GL_TRUE : GL_FALSE),
-		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-		WGL_COLOR_BITS_ARB, attrs->color_buffer_bits,
-		WGL_DEPTH_BITS_ARB, attrs->depth_buffer_bits,
-		WGL_STENCIL_BITS_ARB, attrs->stencil_buffer_bits,
-		WGL_SAMPLE_BUFFERS_ARB,
-            ((attrs->flags & GTK_GL_SAMPLE_BUFFERS) ? GL_TRUE : GL_FALSE),
- 		WGL_SAMPLES_ARB, attrs->num_samples,
-		0
-	};
-
-	GLuint n_formats;
-    GLint format;
-	GLfloat fattribs[] = {0};
-
-    return dyn_wglChoosePixelFormatARB
-        && dyn_wglChoosePixelFormatARB(dc, iattribs, fattribs, 1,
-                &format, &n_formats)
-        && n_formats
-        && SetPixelFormat(dc, format, NULL);
 }
 
 
@@ -327,9 +296,66 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
 	list = gtk_gl_visual_list_new(TRUE, n_formats);
 	for (i = 0; i < n_formats; ++i) {
-		list->entries[i] = gtk_gl_visual_new(formats[i]);
+		list->entries[i] = gtk_gl_visual_new(native->dc, formats[i]);
 	}
 	return list;
+}
+
+
+void
+gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
+    int value;
+	int attr;
+
+    assert(visual);
+    assert(out);
+    assert(glxew_initialized);
+    assert(GLXEW_VERSION_1_3);
+
+#define QUERY(a) \
+    (attr = WGL_##attr##_ARB, wglGetPixelFormatAttribivARB(visual->dc, \
+			visual->pf, 0, 1, &attr, &value, value)
+
+    out->accelerated = QUERY(ACCELERATION);
+
+	out->color_types = QUERY(PIXEL_TYPE) == WGL_TYPE_RGBA_ARB
+			? GTK_GL_COLOR_RGBA : GTK_GL_COLOR_INDEXED;
+
+    out->color_bpp = QUERY(COLOR_BITS);
+    out->fb_level = 0;
+    out->double_buffered = QUERY(DOUBLE_BUFFER);
+    out->stereo_buffered = QUERY(STEREO);
+    out->aux_buffers = QUERY(AUX_BUFFERS);
+    out->red_color_bpp = QUERY(RED_BITS);
+    out->green_color_bpp = QUERY(GREEN_BITS);
+    out->blue_color_bpp = QUERY(BLUE_BITS);
+    out->alpha_color_bpp = QUERY(ALPHA_BITS);
+    out->depth_bpp = QUERY(DEPTH_BITS);
+    out->stencil_bpp = QUERY(STENCIL_BITS);
+    out->red_accum_bpp = QUERY(ACCUM_RED_BITS);
+    out->green_accum_bpp = QUERY(ACCUM_GREEN_BITS);
+    out->blue_accum_bpp = QUERY(ACCUM_BLUE_BITS);
+    out->alpha_accum_bpp = QUERY(ACCUM_ALPHA_BITS);
+
+  	out->transparent_type = out->color_types == GTK_GL_COLOR_RGBA
+			? GTK_GL_TRANSPARENT_RGB : GTK_GL_TRANSPARENT_INDEX;
+
+    out->transparent_index = QUERY(TRANSPARENT_INDEX_VALUE);
+    out->transparent_red = QUERY(TRANSPARENT_RED_VALUE);
+    out->transparent_green = QUERY(TRANSPARENT_GREEN_VALUE);
+    out->transparent_blue = QUERY(TRANSPARENT_BLUE_VALUE);
+    out->transparent_alpha = QUERY(TRANSPARENT_ALPHA_VALUE);
+
+    if (WGLEW_ARB_multisample) {
+        out->sample_buffers = QUERY(SAMPLE_BUFFERS_ARB);
+        out->samples_per_pixel = QUERY(SAMPLES_ARB);
+    } else {
+        out->sample_buffers = out->samples_per_pixel = 0;
+    }
+
+	out->caveat = GTK_GL_CAVEAT_NONE;
+
+#undef QUERY
 }
 
 
@@ -382,6 +408,15 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 		gtk_gl_canvas_native_destroy_context(canvas);
 		return FALSE;
 	}
+
+    // Do glewInit() again in order to get the correct function pointers
+    // for the created context
+    if (glewInit() != GLEW_OK) {
+        g_warning("glewInit() failed after context creation");
+		gtk_gl_canvas_native_destroy_context(canvas);
+        return FALSE;
+    }
+
 	return TRUE;
 }
 
@@ -431,7 +466,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
          * compatibility is checked later via GLEW_ARB_compatibility in that
          * case
          */
-        if (WGL_ARB_create_context_profile) {
+        if (WGLEW_ARB_create_context_profile) {
             attrib_list[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
             switch (profile) {
                 case GTK_GL_CORE_PROFILE:
@@ -443,7 +478,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
                     break;
 
                 case GTK_GL_ES_PROFILE:
-                    if (!WGL_EXT_create_context_es_profile) return FALSE;
+                    if (!WGLEW_EXT_create_context_es_profile) return FALSE;
                     attrib_list[5] = WGL_CONTEXT_ES_PROFILE_BIT_EXT;
                     break;
 
