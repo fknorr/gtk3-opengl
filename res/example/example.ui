@@ -102,6 +102,8 @@
                 <property name="double_buffered">False</property>
                 <signal name="destroy" handler="example_stop_animation" swapped="no"/>
                 <signal name="draw" handler="example_draw" swapped="no"/>
+                <signal name="leave-notify-event" handler="example_mouse_leave" swapped="no"/>
+                <signal name="motion-notify-event" handler="example_mouse_move" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -189,13 +191,37 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="info-label">
+          <object class="GtkBox" id="info-box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="xpad">3</property>
-            <property name="ypad">2</property>
-            <property name="label" translatable="yes">No context present</property>
-            <property name="xalign">0</property>
+            <child>
+              <object class="GtkLabel" id="context-info-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xpad">3</property>
+                <property name="ypad">2</property>
+                <property name="label" translatable="yes">No context present</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="mouse-info-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_right">3</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>

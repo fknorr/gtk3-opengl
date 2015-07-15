@@ -30,7 +30,7 @@ static GtkWidget *window;
 static GtkListStore *visual_list_store;
 static GtkDialog *chooser;
 static GtkGLCanvas *canvas;
-static GtkLabel *info_label;
+static GtkLabel *context_info_label, *mouse_info_label;
 static GtkTreeSelection *visual_selection;
 static GtkAdjustment *major_adjust, *minor_adjust;
 static GtkComboBox *profile_combo;
@@ -374,10 +374,10 @@ update_context_info(void) {
 	if (present) {
 		char *text = g_strdup_printf("OpenGL Version %s",
 				(const char*) glGetString(GL_VERSION));
-		gtk_label_set_text(info_label, text);
+		gtk_label_set_text(context_info_label, text);
 		g_free(text);
 	} else {
-		gtk_label_set_text(info_label, "No context present");
+		gtk_label_set_text(context_info_label, "No context present");
 	}
 
 	gtk_widget_set_sensitive(GTK_WIDGET(create_button), !present);
@@ -491,6 +491,22 @@ example_check_context(void) {
 }
 
 
+gboolean
+example_mouse_move(GtkWidget *widget, GdkEventMotion *ev) {
+	char *text = g_strdup_printf("Mouse at (%d, %d)", (int) ev->x, (int) ev->y);
+	gtk_label_set_text(mouse_info_label, text);
+	g_free(text);
+	return FALSE;
+}
+
+
+gboolean
+example_mouse_leave(GtkWidget *widget, GdkEventCrossing *ev) {
+	gtk_label_set_text(mouse_info_label, "");
+	return FALSE;
+}
+
+
 int
 main(int argc, char *argv[]) {
 	GtkBuilder *builder;
@@ -507,7 +523,8 @@ main(int argc, char *argv[]) {
 #define GET(name) gtk_builder_get_object(builder, name)
 
 	window = GTK_WIDGET(GET("window"));
-	info_label = GTK_LABEL(GET("info-label"));
+	context_info_label = GTK_LABEL(GET("context-info-label"));
+	mouse_info_label = GTK_LABEL(GET("mouse-info-label"));
 	chooser = GTK_DIALOG(GET("context-chooser"));
 	visual_list_store = GTK_LIST_STORE(GET("visual-list-store"));
 	canvas = GTK_GL_CANVAS(GET("canvas"));
