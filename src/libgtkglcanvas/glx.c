@@ -471,7 +471,9 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
     const char *cxt_version;
     unsigned cxt_major, cxt_minor;
 
-    if (ver_major < 3 || (ver_major == 3 && ver_minor == 0)) {
+    if ((ver_major < 3 || (ver_major == 3 && ver_minor == 0))
+            && (profile == GTK_GL_CORE_PROFILE
+                || profile == GTK_GL_COMPATIBILITY_PROFILE)) {
         if (!gtk_gl_canvas_native_create_context(canvas, visual)) {
             return FALSE;
         }
@@ -483,10 +485,22 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         };
         if (GLXEW_ARB_create_context_profile) {
             attrib_list[4] = GLX_CONTEXT_PROFILE_MASK_ARB;
-            if (profile == GTK_GL_CORE_PROFILE) {
-                attrib_list[5] = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
-            } else {
-                attrib_list[5] = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+            switch (profile) {
+                case GTK_GL_CORE_PROFILE:
+                    attrib_list[5] = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+                    break;
+
+                case GTK_GL_COMPATIBILITY_PROFILE:
+                    attrib_list[5] = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+                    break;
+
+                case GTK_GL_ES_PROFILE:
+                    if (!GLXEW_EXT_create_context_es_profile) return FALSE;
+                    attrib_list[5] = GLX_CONTEXT_ES_PROFILE_BIT_EXT;
+                    break;
+
+                default:
+                    return FALSE;
             }
         };
 
@@ -503,14 +517,21 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
     }
 
     cxt_version = (const char*) glGetString(GL_VERSION);
-    if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2
-            && (cxt_major > ver_major
-                || (cxt_major == ver_major && cxt_minor >= ver_minor))) {
+    if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2) {
+        if (cxt_major < ver_major
+                || (cxt_major == ver_major && cxt_minor < ver_minor)) {
+            return FALSE;
+        }
+        if (cxt_major == 3 && cxt_minor == 1
+                && profile == GTK_GL_COMPATIBILITY_PROFILE
+                && !GLEW_ARB_compatibility) {
+            return FALSE;
+        }
         return TRUE;
-    } else {
-        gtk_gl_canvas_native_destroy_context(canvas);
-        return FALSE;
     }
+
+    gtk_gl_canvas_native_destroy_context(canvas);
+    return FALSE;
 }
 
 

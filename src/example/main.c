@@ -444,8 +444,11 @@ example_create_context(void) {
 
 		ver_major = (unsigned) gtk_adjustment_get_value(major_adjust);
 		ver_minor = (unsigned) gtk_adjustment_get_value(minor_adjust);
-		profile = gtk_combo_box_get_active(profile_combo) == 0
-				? GTK_GL_CORE_PROFILE : GTK_GL_COMPATIBILITY_PROFILE;
+		switch (gtk_combo_box_get_active(profile_combo)) {
+			case 0: profile = GTK_GL_CORE_PROFILE; break;
+			case 1: profile = GTK_GL_COMPATIBILITY_PROFILE; break;
+			case 2: profile = GTK_GL_ES_PROFILE; break;
+		}
 
 		if (gtk_gl_canvas_create_context_with_version(canvas,
 				visuals->entries[i], ver_major, ver_minor, profile)) {
