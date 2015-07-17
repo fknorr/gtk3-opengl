@@ -337,8 +337,10 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     out->blue_accum_bpp = QUERY(ACCUM_BLUE_BITS);
     out->alpha_accum_bpp = QUERY(ACCUM_ALPHA_BITS);
 
-  	out->transparent_type = out->color_types == GTK_GL_COLOR_RGBA
-			? GTK_GL_TRANSPARENT_RGB : GTK_GL_TRANSPARENT_INDEX;
+  	out->transparent_type = QUERY(TRANSPARENT) ? (
+				out->color_types == GTK_GL_COLOR_RGBA
+				? GTK_GL_TRANSPARENT_RGB : GTK_GL_TRANSPARENT_INDEX
+			) : GTK_GL_TRANSPARENT_NONE;
 
     out->transparent_index = QUERY(TRANSPARENT_INDEX_VALUE);
     out->transparent_red = QUERY(TRANSPARENT_RED_VALUE);
