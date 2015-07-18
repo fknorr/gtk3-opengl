@@ -414,7 +414,7 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 
 static gboolean
 gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual *visual) {
+        const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
 
@@ -443,7 +443,7 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
 
 static gboolean
 gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual *visual) {
+        const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     int attrib;
@@ -484,7 +484,7 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 
 gboolean
 gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual *visual) {
+        const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
@@ -508,7 +508,7 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
 
 gboolean
 gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
-        GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
         GtkGLProfile profile) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;

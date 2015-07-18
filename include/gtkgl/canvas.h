@@ -128,7 +128,7 @@ GtkGLVisualList *gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas);
  * @return Whether context creation was successful
  */
 gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
-        GtkGLVisual *visual);
+        const GtkGLVisual *visual);
 
 
 /**
@@ -149,7 +149,7 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
  * @return Whether context creation was successful
  */
 gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
-        GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
         GtkGLProfile profile);
 
 /**

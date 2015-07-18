@@ -39,9 +39,3 @@ else
 __top_builddir__example_CFLAGS = \
 	-rdynamic
 endif
-
-$(top_builddir)/example.ui:
-	cp $(srcdir)/example.ui $(top_builddir)
-
-__top_builddir__example_DEPENDENCIES = \
-	$(top_builddir)/example.ui

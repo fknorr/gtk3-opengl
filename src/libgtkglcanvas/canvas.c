@@ -249,7 +249,7 @@ gtk_gl_canvas_after_create_context(GtkGLCanvas *canvas, gboolean success) {
 
 
 gboolean
-gtk_gl_canvas_create_context(GtkGLCanvas *canvas, GtkGLVisual *visual) {
+gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visual) {
     gboolean success;
     gtk_gl_canvas_before_create_context(canvas);
 	success = gtk_gl_canvas_native_create_context(canvas, visual);
@@ -260,7 +260,7 @@ gtk_gl_canvas_create_context(GtkGLCanvas *canvas, GtkGLVisual *visual) {
 
 gboolean
 gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
-       GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+       const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
        GtkGLProfile profile) {
     gboolean success;
     gtk_gl_canvas_before_create_context(canvas);

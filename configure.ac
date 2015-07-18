@@ -28,19 +28,6 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CC
 
-PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],
-    [AC_MSG_ERROR([Missing dependency: GTK+3])])
-PKG_CHECK_MODULES([OpenGL], [gl], [],
-    [AC_MSG_ERROR([Missing dependency: libGL])])
-PKG_CHECK_MODULES([GLEW], [glew], [],
-    [AC_MSG_ERROR([Missing dependency: libGLEW])])
-
-PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
-    [have_glade=yes;
-        ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`;
-        ac_gladeui_pixmapdir=`$PKG_CONFIG --variable=pixmapdir gladeui-2.0`],
-    [ac_gladeui_catdir=; have_glade=no])
-
 
 dnl ***************************************************************************
 dnl Check for Windows
@@ -62,9 +49,22 @@ case $host_os in
     ;;
 esac
 
+PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],
+    [AC_MSG_ERROR([Missing dependency: GTK+3])])
+PKG_CHECK_MODULES([GLEW], [glew], [],
+    [AC_MSG_ERROR([Missing dependency: libGLEW])])
+
+PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
+    [have_glade=yes;
+        ac_gladeui_catdir=`$PKG_CONFIG --variable=catalogdir gladeui-2.0`;
+        ac_gladeui_pixmapdir=`$PKG_CONFIG --variable=pixmapdir gladeui-2.0`],
+    [ac_gladeui_catdir=; have_glade=no])
+
 if test x"$platform_win32" = "xno"; then
-PKG_CHECK_MODULES([GL], [gl])
-PKG_CHECK_MODULES([X11], [x11])
+    PKG_CHECK_MODULES([OpenGL], [gl], [],
+    [AC_MSG_ERROR([Missing dependency: libGL])])
+    PKG_CHECK_MODULES([X11], [x11], [],
+    [AC_MSG_ERROR([Missing dependendy: X11])])
 fi
 
 AM_CONDITIONAL(PLATFORM_WIN32, test x"$platform_win32" = "xyes")
