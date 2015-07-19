@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.

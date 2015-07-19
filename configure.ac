@@ -28,6 +28,15 @@ AM_INIT_AUTOMAKE([1.11])
 
 AM_SILENT_RULES([yes])
 
+AC_CONFIG_MACRO_DIR([m4])
+
+# check for gtk-doc
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+],[
+AM_CONDITIONAL([ENABLE_GTK_DOC], false)
+])
+
 AC_PROG_CC
 
 
@@ -86,12 +95,12 @@ pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s
 AC_SUBST(PKG_CONFIG_DIR, "$pkgconfig_dir")
 
 
-AC_CONFIG_MACRO_DIR([m4])
-
-
 AC_OUTPUT([
 Makefile
 src/Makefile
 src/libgtkglcanvas/Makefile
 src/example/Makefile
+docs/Makefile
+docs/reference/Makefile
+docs/reference/libgtkglcanvas/Makefile
 ])

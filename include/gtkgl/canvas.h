@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.
@@ -17,14 +17,14 @@
  * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * This file is based on the work of André Diego Piske,
  * see <https://github.com/andrepiske/tegtkgl>. To retain André's licensing
  * conditions on the parts of the software authored by him, the following
  * copyright notice shall be included in this and all derived files:
  */
 
-/**
+/*
  * Copyright (c) 2013 André Diego Piske
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +44,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- **/
+ */
 
 
 #pragma once
@@ -85,12 +85,14 @@ typedef enum _GtkGLProfile {
 
 
 /**
+ * GtkGLCanvas:
  * The GLCanvas Widget type.
  */
 typedef struct _GtkGLCanvas GtkGLCanvas;
 
 
 /**
+ * GtkGLCanvasClass:
  * Type information for @ref GtkGLCanvas
  */
 typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
