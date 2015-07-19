@@ -263,7 +263,9 @@ GtkGLVisualList *
 gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	static const int iattribs[] = {
 	 		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-			WGL_SUPPORT_OPENGL_ARB, GL_TRUE
+			WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB, // TODO
+			0
 	};
 	static const float fattribs[] = { 0 };
 
@@ -301,8 +303,6 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	for (i = 0; i < n_formats; ++i) {
 		list->entries[i] = gtk_gl_visual_new(native->dc, formats[i]);
 	}
-
-    gtk_gl_visual_list_sort(list);
 	return list;
 }
 
@@ -311,14 +311,15 @@ void
 gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     int value;
 	int attr;
+	gboolean ok;
 
     assert(visual);
     assert(out);
     assert(wglew_initialized);
 
 #define QUERY(a) \
-    (attr = WGL_##a##_ARB, wglGetPixelFormatAttribivARB(visual->dc, \
-			visual->pf, 0, 1, &attr, &value), value)
+    (attr = WGL_##a##_ARB, ok = wglGetPixelFormatAttribivARB(visual->dc, \
+			visual->pf, 0, 1, &attr, &value), ok ? value : 0)
 
     out->accelerated = QUERY(ACCELERATION);
 

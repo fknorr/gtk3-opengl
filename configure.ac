@@ -20,6 +20,8 @@ dnl Created by Anjuta application wizard.
 
 AC_INIT(gtkglcanvas, 0.1)
 
+LT_INIT([])
+
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([1.11])
@@ -83,7 +85,6 @@ AC_SUBST(GLADEUI_PIXMAPDIR, "$ac_gladeui_pixmapdir")
 pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s/'//gp;q;}"`"
 AC_SUBST(PKG_CONFIG_DIR, "$pkgconfig_dir")
 
-LT_INIT([win32-dll])
 
 AC_CONFIG_MACRO_DIR([m4])
 

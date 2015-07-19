@@ -36,6 +36,8 @@ __top_builddir__example_CPPFLAGS = \
 if PLATFORM_WIN32
 __top_builddir__example_LDFLAGS = \
 	-Wl,--export-all-symbols
+# FreeType missing symbols workaround
+__top_builddir__example_LDADD += -lbz2
 else
 __top_builddir__example_CFLAGS = \
 	-rdynamic

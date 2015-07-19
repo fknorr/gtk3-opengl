@@ -342,7 +342,6 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
     }
 
     list->count = j;
-    gtk_gl_visual_list_sort(list);
     return list;
 }
 

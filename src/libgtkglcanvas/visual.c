@@ -86,7 +86,13 @@ compare_configurations(const GtkGLFramebufferConfig *lhs,
 
 #define CASE_ORDER_BY(attr, var) \
     case GTK_GL_##attr: \
-        if (lhs->var < rhs->var) { \
+        if (r->req == GTK_GL_PREFERABLY && (int) lhs->var == r->value \
+                && (int) rhs->var != r->value) { \
+            return -1; \
+        } else if (r->req == GTK_GL_PREFERABLY && (int) lhs->var != r->value \
+                && (int) rhs->var == r->value) { \
+            return +1; \
+        } else if (lhs->var < rhs->var) { \
             return r->req == GTK_GL_AT_MOST /* ascending */ ? -1 : +1; \
         } else if (lhs->var > rhs->var) { \
             return r->req == GTK_GL_AT_LEAST /* descending */ ? -1 : +1; \
@@ -102,7 +108,7 @@ compare_configurations(const GtkGLFramebufferConfig *lhs,
 #define PREFER_GREATER(attr) PREFER_ORDER(attr, +1)
 
     while (r->attr != GTK_GL_NONE) {
-        if (r->req == GTK_GL_AT_MOST || r->req == GTK_GL_AT_LEAST) {
+        if (r->req != GTK_GL_EXACTLY) {
             switch (r->attr) {
                 CASE_ORDER_BY(ACCELERATED, accelerated)
                 CASE_ORDER_BY(COLOR_TYPES, color_types)
@@ -116,7 +122,7 @@ compare_configurations(const GtkGLFramebufferConfig *lhs,
                 CASE_ORDER_BY(BLUE_COLOR_BPP, blue_color_bpp)
                 CASE_ORDER_BY(ALPHA_COLOR_BPP, alpha_color_bpp)
                 CASE_ORDER_BY(DEPTH_BPP, depth_bpp)
-                CASE_ORDER_BY(STENCIL_BPP, depth_bpp)
+                CASE_ORDER_BY(STENCIL_BPP, stencil_bpp)
                 CASE_ORDER_BY(RED_ACCUM_BPP, red_accum_bpp)
                 CASE_ORDER_BY(GREEN_ACCUM_BPP, green_accum_bpp)
                 CASE_ORDER_BY(BLUE_ACCUM_BPP, blue_accum_bpp)
@@ -159,16 +165,6 @@ compare_configurations(const GtkGLFramebufferConfig *lhs,
 #undef PREFER_ORDER
 #undef PREFER_GREATER
 #undef PREFER_LESS
-}
-
-
-static int
-compare_visuals(const void *lhs, const void *rhs) {
-    static const GtkGLRequirement empty_list[] = { GTK_GL_LIST_END };
-    GtkGLFramebufferConfig lhs_config, rhs_config;
-    gtk_gl_describe_visual(*(const GtkGLVisual**) lhs, &lhs_config);
-    gtk_gl_describe_visual(*(const GtkGLVisual**) rhs, &rhs_config);
-    return compare_configurations(&lhs_config, &rhs_config, empty_list);
 }
 
 
@@ -218,13 +214,6 @@ gtk_gl_choose_visuals(const GtkGLVisualList *pool,
     g_tree_unref(suitable_configs);
 
     return list;
-}
-
-
-void
-gtk_gl_visual_list_sort(GtkGLVisualList *list) {
-    assert(list);
-    qsort(list->entries, list->count, sizeof(GtkGLVisual*), compare_visuals);
 }
 
 

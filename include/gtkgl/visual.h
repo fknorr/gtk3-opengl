@@ -325,19 +325,6 @@ GtkGLVisualList *gtk_gl_visual_list_new(gboolean is_owner, size_t count);
 
 
 /**
- * Sorts a visual list ascending by relevance and estimated resource
- * requirement.
- *
- * Visuals without caveats are preferred over visuals with caveats, accelerated
- * visuals are preferred over unaccelerated ones, and visuals with less
- * features, buffers and buffer depth are preferred over visuals with more
- * resource requirements.
- * @param list The visual list
- */
-void gtk_gl_visual_list_sort(GtkGLVisualList *list);
-
-
-/**
  * Frees a GtkGLVisualList.
  *
  * Optionally frees the entries if the list structure owns them.
