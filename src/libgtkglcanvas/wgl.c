@@ -301,6 +301,8 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	for (i = 0; i < n_formats; ++i) {
 		list->entries[i] = gtk_gl_visual_new(native->dc, formats[i]);
 	}
+
+    gtk_gl_visual_list_sort(list);
 	return list;
 }
 

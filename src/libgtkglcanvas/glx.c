@@ -340,7 +340,9 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
         g_warning("Received X window system error during visual enumeration");
         return gtk_gl_visual_list_new(TRUE, 0);
     }
+
     list->count = j;
+    gtk_gl_visual_list_sort(list);
     return list;
 }
 
