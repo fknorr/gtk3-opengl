@@ -270,10 +270,12 @@ typedef enum _GtkGLRequirementType {
     /// The attribute value must match the reference value exactly
     GTK_GL_EXACTLY,
 
-    /// The attribute value must not be greater than the reference value
+    /// The attribute value must not be greater than the reference value.
+    /// Smaller values will be preferred
     GTK_GL_AT_MOST,
 
-    /// The attribute value must not be less than the reference value
+    /// The attribute value must not be less than the reference value.
+    /// Greater values will be preferred
     GTK_GL_AT_LEAST
 } GtkGLRequirementType;
 
@@ -320,6 +322,19 @@ void gtk_gl_visual_free(GtkGLVisual *vis);
  * @return The new list
  */
 GtkGLVisualList *gtk_gl_visual_list_new(gboolean is_owner, size_t count);
+
+
+/**
+ * Sorts a visual list ascending by relevance and estimated resource
+ * requirement.
+ *
+ * Visuals without caveats are preferred over visuals with caveats, accelerated
+ * visuals are preferred over unaccelerated ones, and visuals with less
+ * features, buffers and buffer depth are preferred over visuals with more
+ * resource requirements.
+ * @param list The visual list
+ */
+void gtk_gl_visual_list_sort(GtkGLVisualList *list);
 
 
 /**
