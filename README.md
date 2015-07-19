@@ -1,13 +1,16 @@
-GtkGLCanvas OpenGL Widget for GTK+ 3
-------------------------------------
+### GtkGLCanvas OpenGL Widget for GTK+ 3
 
 This library provides an OpenGL drawing area widget for GTK+ 3.0. Context
 creation is platform-independent and possible under X11 as well as Windows.
+
+![OpenGL Canvas Screenshot](docs/screenshots/canvas.png)
 
 Framebuffer configurations are selected via *Visuals* that can be filtered and
 sorted arbitrarily. The library supports creation of pre-3.1 legacy contexts
 as well as OpenGL 3.1+ Core, Compatibility and (still experimental) OpenGL ES
 contexts.
+
+![Visual Selection Screenshot](docs/screenshots/visuals.png)
 
 GtkGLCanvas closely interacts with GLEW for extension loading and requires
 libGLEW to be present on the target system.
