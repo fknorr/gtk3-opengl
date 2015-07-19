@@ -17,7 +17,8 @@
 check_PROGRAMS = $(top_builddir)/example
 
 __top_builddir__example_SOURCES = \
-	main.c
+	main.c \
+	filter-dialog.c
 
 __top_builddir__example_LDADD = \
 	$(top_builddir)/libgtkglcanvas.la \
