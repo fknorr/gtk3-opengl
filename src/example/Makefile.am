@@ -17,25 +17,28 @@
 check_PROGRAMS = $(top_builddir)/example
 
 __top_builddir__example_SOURCES = \
-	main.c
+	main.c \
+	filter-dialog.c
 
 __top_builddir__example_LDADD = \
-	$(top_builddir)/libgtkglcanvas.la -lm -lGL \
-	@GTK_LIBS@
+	$(top_builddir)/libgtkglcanvas.la \
+	-lm \
+	$(GTK_LIBS) \
+	$(OpenGL_LIBS) \
+	$(GLEW_LIBS)
 
 __top_builddir__example_CPPFLAGS = \
-    @GTK_CFLAGS@
+	-I$(top_srcdir)/include \
+	$(OpenGL_CFLAGS) \
+	$(GLEW_CFLAGS) \
+    $(GTK_CFLAGS)
 
 if PLATFORM_WIN32
 __top_builddir__example_LDFLAGS = \
 	-Wl,--export-all-symbols
+# FreeType missing symbols workaround
+__top_builddir__example_LDADD += -lbz2
 else
 __top_builddir__example_CFLAGS = \
 	-rdynamic
 endif
-
-$(top_builddir)/example.ui:
-	cp $(srcdir)/example.ui $(top_builddir)
-
-__top_builddir__example_DEPENDENCIES = \
-	$(top_builddir)/example.ui

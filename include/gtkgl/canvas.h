@@ -50,7 +50,7 @@
 #pragma once
 
 #include <gtk/gtk.h>
-#include "attributes.h"
+#include "visual.h"
 
 
 G_BEGIN_DECLS
@@ -67,6 +67,21 @@ G_BEGIN_DECLS
         GTK_GL_TYPE_CANVAS_CLASS))
 #define GTK_GL_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), GTK_GL_TYPE_CANVAS, \
         GtkGLCanvasClass))
+
+
+/// An OpenGL context profile as available in OpenGL versions > 3.0
+typedef enum _GtkGLProfile {
+    /// The core profile, only supporting non-deprecated features
+    GTK_GL_CORE_PROFILE,
+
+    /// The compatibility profile, supporting both non-deprecated and
+    /// deprecated features
+    GTK_GL_COMPATIBILITY_PROFILE,
+
+    /// The OpenGL ES profile, supporting only features in the OpenGL ES
+    /// specification
+    GTK_GL_ES_PROFILE
+} GtkGLProfile;
 
 
 /**
@@ -95,23 +110,47 @@ GType gtk_gl_canvas_get_type(void);
 GtkWidget *gtk_gl_canvas_new(void);
 
 
+GtkGLVisualList *gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas);
+
+
 /**
  * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
  * current to the calling thread.
  *
- * The method finds the closest match of available context types to the
- * attributes supplied.
+ * This function can not create core profile contexts with an OpenGL version
+ * > 3.0.
  *
  * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
  * returns the error message.
  *
  * @param canvas The canvas
- * @param attrs The attributes for the context to be created
- * @return Whether context creation was successfull
+ * @param visual The visual to create the context for
+ * @return Whether context creation was successful
  */
 gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
-        const GtkGLAttributes *attrs);
+        const GtkGLVisual *visual);
 
+
+/**
+ * Creates a new OpenGL context on a dummy @ref GtkGLCanvas, making the context
+ * current to the calling thread. Unlike gtk_gl_canvas_create_context, this
+ * function allows the user to specify the desired GL version and profile.
+ *
+ * Use this function to create contexts with an OpenGL version > 3.0.
+ *
+ * If creation fails, @code FALSE is returned and @ref gek_gl_canvas_get_error
+ * returns the error message.
+ *
+ * @param canvas The canvas
+ * @param visual The visual to create the context for
+ * @param ver_major The desired GL major version
+ * @param ver_minor The desired GL minor version
+ * @param profile The desired GL profile
+ * @return Whether context creation was successful
+ */
+gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
+        const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        GtkGLProfile profile);
 
 /**
  * Destroys an active context on a @ref GtkGLCanvas.
@@ -131,14 +170,6 @@ gboolean gtk_gl_canvas_has_context(GtkGLCanvas *canvas);
 
 
 /**
- * Returns the last error encountered by one of the gtk_gl_* functions.
- * @param canvas The canvas to check for
- * @return The error message
- */
-const char *gtk_gl_canvas_get_error(GtkGLCanvas *canvas);
-
-
-/**
  * Makes the OpenGL context of a @ref GtkGLCanvas current to the calling thread.
  *
  * This means that all subsequent calls to gl* functions will operate on this
@@ -150,12 +181,11 @@ void gtk_gl_canvas_make_current(GtkGLCanvas* canvas);
 
 
 /**
- * Swaps the front and back buffer in a GL context created with the
- * @ref GTK_GL_DOUBLE_BUFFERED flag.
+ * Swaps the front and back buffer in a double-buffered GL context or flushes
+ * all GL draw calls in a single-buffered context.
  * @param canvas The canvas.
  */
-void gtk_gl_canvas_swap_buffers(GtkGLCanvas* canvas);
+void gtk_gl_canvas_display_frame(GtkGLCanvas* canvas);
 
 
 G_END_DECLS
-

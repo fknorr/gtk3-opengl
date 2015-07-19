@@ -3,7 +3,7 @@
 	<glade-widget-classes>
 		<glade-widget-class name="GtkGLCanvas" generic-name="glcanvas" title="GtkGLCanvas"/>
 	</glade-widget-classes>
-	<glade-widget-group name="gtkgl" title="GtkGLCanvas">
+	<glade-widget-group name="gtkgl" title="OpenGL">
 		<glade-widget-class-ref name="GtkGLCanvas"/>
 	</glade-widget-group>
 </glade-catalog>
