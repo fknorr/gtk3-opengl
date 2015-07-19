@@ -438,7 +438,9 @@ example_create_context(void) {
 			gtk_gl_describe_visual(visuals->entries[i], &cfg);
 			gtk_list_store_insert_with_values(visual_list_store, NULL, -1,
 				0, cfg.accelerated,
-				1, cfg.color_types & GTK_GL_COLOR_RGBA ? "RGBA" : "Indexed",
+				1, cfg.color_types & GTK_GL_COLOR_RGBA
+					? cfg.color_types & GTK_GL_COLOR_INDEXED ? "RGBA+Indexed"
+					: "RGBA" : "Indexed",
 				2, cfg.color_bpp,
 				3, cfg.fb_level,
 				4, cfg.double_buffered,
