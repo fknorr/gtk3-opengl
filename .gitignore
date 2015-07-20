@@ -22,3 +22,6 @@ config.log
 ltmain.sh
 .atom-build.json
 .linter-clang-includes
+win32/
+win64/
+gtk-doc.make

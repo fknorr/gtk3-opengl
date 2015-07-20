@@ -1,3 +1,5 @@
+# Copyright (c) 2014-2015, Fabian Knorr
+#
 # This file is part of libgtkglcanvas.
 #
 # libgtkglcanvas is free software: you can redistribute it and/or modify

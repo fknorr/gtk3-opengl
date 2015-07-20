@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Fabian Knorr
+ * Copyright (c) 2014-2015, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.
  *
@@ -260,7 +260,7 @@ gtk_gl_canvas_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visual) {
 
 gboolean
 gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
-       const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+       const GtkGLVisual *visual, guint ver_major, guint ver_minor,
        GtkGLProfile profile) {
     gboolean success;
     gtk_gl_canvas_before_create_context(canvas);

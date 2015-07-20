@@ -1,21 +1,27 @@
-## Process this file with automake to produce Makefile.in
+# Copyright (c) 2014-2015, Fabian Knorr
+#
+# This file is part of libgtkglcanvas.
+#
+# libgtkglcanvas is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# libgtkglcanvas is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with libgtkglcanvas.  If not, see <http://www.gnu.org/licenses/>.
+
 
 # We require automake 1.6 at least.
 AUTOMAKE_OPTIONS = 1.6
-
-# This is a blank Makefile.am for using gtk-doc.
-# Copy this to your project's API docs directory and modify the variables to
-# suit your project. See the GTK+ Makefiles in gtk+/docs/reference for examples
-# of using the various options.
-
-# The name of the module, e.g. 'glib'.
-DOC_MODULE = libgtkglcanvas
-
-# Uncomment for versioned docs and specify the version of the module, e.g. '2'.
+DOC_MODULE = GtkGLCanvas
 DOC_MODULE_VERSION=2.0
 
-
-# The top-level XML file (SGML in the past). You can change this if you want to.
+# The top-level XML file (SGML in the past).
 DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.xml
 
 # Directories containing the source code.
@@ -50,7 +56,7 @@ FIXXREF_OPTIONS=
 # e.g. HFILE_GLOB=$(top_srcdir)/gtk/*.h
 # e.g. CFILE_GLOB=$(top_srcdir)/gtk/*.c
 HFILE_GLOB=$(top_srcdir)/include/gtkgl/*.h
-CFILE_GLOB=
+CFILE_GLOB=$(top_srcdir)/src/libgtkglcanvas/*.c
 
 # Extra header to include when scanning, which are not under DOC_SOURCE_DIR
 # e.g. EXTRA_HFILES=$(top_srcdir}/contrib/extra.h
@@ -58,7 +64,7 @@ EXTRA_HFILES=
 
 # Header files or dirs to ignore when scanning. Use base file/dir names
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h private_code
-IGNORE_HFILES=
+IGNORE_HFILES=canvas_impl.h
 
 # Images to copy into HTML directory.
 # e.g. HTML_IMAGES=$(top_srcdir)/gtk/stock-icons/stock_about_24.png

@@ -69,7 +69,7 @@ init_wglew(void) {
     HDC dc;
     HGLRC glc;
 	PIXELFORMATDESCRIPTOR pfd;
-	int pf;
+	gint pf;
 
 	if (wglew_initialized) return TRUE;
 
@@ -147,12 +147,12 @@ end:
 
 struct _GtkGLVisual {
 	HDC dc;
-	int pf;
+	gint pf;
 };
 
 
 static GtkGLVisual *
-gtk_gl_visual_new(HDC dc, int pf) {
+gtk_gl_visual_new(HDC dc, gint pf) {
     GtkGLVisual visual = { dc, pf };
     return g_memdup(&visual, sizeof visual);
 }
@@ -261,7 +261,7 @@ gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
 
 GtkGLVisualList *
 gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
-	static const int iattribs[] = {
+	static const gint iattribs[] = {
 	 		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
 			WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
 			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB, // TODO
@@ -271,7 +271,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-	int *formats;
+	gint *formats;
 	UINT n_formats, i;
 	GtkGLVisualList *list;
 
@@ -309,8 +309,8 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
 void
 gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
-    int value;
-	int attr;
+    gint value;
+	gint attr;
 	gboolean ok;
 
     assert(visual);
@@ -402,7 +402,7 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-	int attr, value;
+	gint attr, value;
 
 	if(!native->glc) {
 		g_warning("Unable to create GL context");
@@ -449,12 +449,12 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
 
 gboolean
 gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
-        const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        const GtkGLVisual *visual, guint ver_major, guint ver_minor,
         GtkGLProfile profile) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     const char *cxt_version;
-    unsigned cxt_major, cxt_minor;
+    guint cxt_major, cxt_minor;
 
     if ((ver_major < 3 || (ver_major == 3 && ver_minor == 0))
             && (profile == GTK_GL_CORE_PROFILE
@@ -468,7 +468,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
          * wglCreateContext because the deprecation functionality requires
          * specification of the target version.
          */
-        int attrib_list[] = {
+        gint attrib_list[] = {
                 WGL_CONTEXT_MAJOR_VERSION_ARB, ver_major,
                 WGL_CONTEXT_MINOR_VERSION_ARB, ver_minor,
                 0, 0, 0

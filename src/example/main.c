@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Fabian Knorr
+ * Copyright (c) 2014-2015, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.
  *
@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 #include <gtk/gtk.h>
 #include <gtkgl/visual.h>

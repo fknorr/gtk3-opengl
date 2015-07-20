@@ -33,7 +33,4 @@ uninstall-local:
 	-rm -r $(docdir)
 
 
-SUBDIRS = \
-	src/libgtkglcanvas \
-	src/example \
-	docs
+SUBDIRS = src docs

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Fabian Knorr
+ * Copyright (c) 2014-2015, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.
  *
@@ -40,7 +40,7 @@ void gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas);
 gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);
 gboolean gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
-       const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+       const GtkGLVisual *visual, guint ver_major, guint ver_minor,
        GtkGLProfile profile);
 void gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas);
 void gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas);

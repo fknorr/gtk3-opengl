@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Fabian Knorr
+ * Copyright (c) 2014-2015, Fabian Knorr
  *
  * This file is part of libgtkglcanvas.
  *
@@ -72,14 +72,14 @@ static gboolean glxew_initialized = FALSE;
  * To allow the gtk_gl_* functions to handle X Errors gracefully, they can be
  * "muted" via begin_capture_xerrors() / end_capture_xerrors().
  */
-typedef int (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
+typedef gint (*XErrorHandler)(Display *dpy, XErrorEvent *ev);
 static XErrorHandler old_xerror_handler;
 static XErrorEvent last_xerror;
 static gboolean have_xerror_flag;
 static GMutex xerror_mutex;
 
 
-static int
+static gint
 silent_xerror_handler(Display *dpy, XErrorEvent *ev) {
     last_xerror = *ev;
     have_xerror_flag = TRUE;
@@ -116,15 +116,15 @@ end_capture_xerrors(Display *dpy) {
  * GLEW variables and function for using GLX extensions.
  */
 static gboolean
-init_glxew(Display *dpy, int screen) {
-    static int attr_sets[][3] = {
+init_glxew(Display *dpy, gint screen) {
+    static gint attr_sets[][3] = {
             { GLX_RGBA, GLX_DOUBLEBUFFER, None },
             { GLX_RGBA, None },
             { GLX_DOUBLEBUFFER, None },
             { None }
         };
 
-    int erb, evb;
+    gint erb, evb;
     XVisualInfo *vi = NULL;
     GLXContext cxt;
     Window wnd;
@@ -203,7 +203,7 @@ struct _GtkGLCanvas_NativePriv {
 
     // "Location" of the GtkGLCanvas X window
     Display *dpy;
-    int screen;
+    gint screen;
 
     // The GLX window (residing inside the GtkGLCanvas window)
     GLXWindow win;
@@ -228,7 +228,7 @@ gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
     GtkGLCanvas_NativePriv *native = priv->native;
     XWindowAttributes xattrs;
     XVisualInfo template, *vi;
-    int count;
+    gint count;
 
     if (native->initialized) return TRUE;
 
@@ -288,7 +288,7 @@ gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
 
 
 static gboolean
-visual_type_matches(int glx, int x) {
+visual_type_matches(gint glx, gint x) {
     switch (glx) {
         case GLX_TRUE_COLOR: return x == TrueColor;
         case GLX_DIRECT_COLOR: return x == DirectColor;
@@ -305,7 +305,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
 
-    int fbconfig_count;
+    gint fbconfig_count;
     GLXFBConfig *fbconfigs;
     GtkGLVisualList *list;
     size_t i, j;
@@ -326,7 +326,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
     fbconfigs = glXGetFBConfigs(native->dpy, native->screen, &fbconfig_count);
     list = gtk_gl_visual_list_new(TRUE, fbconfig_count);
     for (i = 0, j = 0; i < list->count; ++i) {
-        int targets, vtype;
+        gint targets, vtype;
         glXGetFBConfigAttrib(native->dpy, fbconfigs[i], GLX_DRAWABLE_TYPE,
             &targets);
         glXGetFBConfigAttrib(native->dpy, fbconfigs[i], GLX_X_VISUAL_TYPE,
@@ -348,7 +348,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
 void
 gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
-    int value;
+    gint value;
 
     assert(visual);
     assert(out);
@@ -447,7 +447,7 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
-    int attrib;
+    gint attrib;
     gboolean failed = FALSE;
 
     if (!native->glc) return FALSE;
@@ -456,7 +456,7 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
     // display_frame()
     glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
             &attrib);
-    priv->double_buffered = (unsigned) attrib;
+    priv->double_buffered = (guint) attrib;
 
     if (!glXMakeCurrent(native->dpy, native->win, native->glc)) {
         g_warning("glXMakeCurrent() failed after successful context creation");
@@ -509,12 +509,12 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
 
 gboolean
 gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
-        const GtkGLVisual *visual, unsigned ver_major, unsigned ver_minor,
+        const GtkGLVisual *visual, guint ver_major, guint ver_minor,
         GtkGLProfile profile) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     const char *cxt_version;
-    unsigned cxt_major, cxt_minor;
+    guint cxt_major, cxt_minor;
 
     if ((ver_major < 3 || (ver_major == 3 && ver_minor == 0))
             && (profile == GTK_GL_CORE_PROFILE
@@ -528,7 +528,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
          * glXCreateContext because the deprecation functionality requires
          * specification of the target version.
          */
-        int attrib_list[] = {
+        gint attrib_list[] = {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, ver_major,
                 GLX_CONTEXT_MINOR_VERSION_ARB, ver_minor,
                 None, None, None

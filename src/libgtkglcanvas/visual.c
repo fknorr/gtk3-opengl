@@ -1,10 +1,29 @@
+/**
+ * Copyright (c) 2014-2015, Fabian Knorr
+ *
+ * This file is part of libgtkglcanvas.
+ *
+ * libgtkglcanvas is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libgtkglcanvas is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <gtkgl/visual.h>
 #include <assert.h>
 #include <stdlib.h>
 
 
 static gboolean
-suits_range(int value1, int value2, GtkGLRequirementType restr) {
+suits_range(gint value1, gint value2, GtkGLRequirementType restr) {
     switch (restr) {
         case GTK_GL_PREFERABLY: return TRUE;
         case GTK_GL_EXACTLY: return value1 == value2;
@@ -15,7 +34,7 @@ suits_range(int value1, int value2, GtkGLRequirementType restr) {
 
 
 static gboolean
-suits_bool(int value1, int value2, GtkGLRequirementType restr) {
+suits_bool(gint value1, gint value2, GtkGLRequirementType restr) {
     switch (restr) {
         case GTK_GL_PREFERABLY: return TRUE;
         case GTK_GL_EXACTLY: return !value1 == !value2;
@@ -79,18 +98,18 @@ is_suitable_configuration(const GtkGLFramebufferConfig *config,
 }
 
 
-static int
+static gint
 compare_configurations(const GtkGLFramebufferConfig *lhs,
         const GtkGLFramebufferConfig *rhs,
         const GtkGLRequirement *r) {
 
 #define CASE_ORDER_BY(attr, var) \
     case GTK_GL_##attr: \
-        if (r->req == GTK_GL_PREFERABLY && (int) lhs->var == r->value \
-                && (int) rhs->var != r->value) { \
+        if (r->req == GTK_GL_PREFERABLY && (gint) lhs->var == r->value \
+                && (gint) rhs->var != r->value) { \
             return -1; \
-        } else if (r->req == GTK_GL_PREFERABLY && (int) lhs->var != r->value \
-                && (int) rhs->var == r->value) { \
+        } else if (r->req == GTK_GL_PREFERABLY && (gint) lhs->var != r->value \
+                && (gint) rhs->var == r->value) { \
             return +1; \
         } else if (lhs->var < rhs->var) { \
             return r->req == GTK_GL_AT_MOST /* ascending */ ? -1 : +1; \
