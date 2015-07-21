@@ -59,11 +59,11 @@
  * @Short_Description: The GtkGLCanvas widget type
  *
  * A #GtkGLCanvas is a widget providing an OpenGL drawing surface. It can be
- * queried for its supported Visuals via #gtk_gl_canvas_enumerate_visuals,
+ * queried for its supported Visuals via #gtk_gl_canvas_enumerate_visuals(),
  * which can the be used to create an OpenGL rendering context inside the
- * canvas widget via #gtk_gl_canvas_create_context . Legacy versions are
+ * canvas widget via #gtk_gl_canvas_create_context() . Legacy versions are
  * supported as well as modern contexts with using version and profile
- * specifications in #gtk_gl_canvas_create_context_with_version .
+ * specifications in #gtk_gl_canvas_create_context_with_version() .
  */
 
 G_BEGIN_DECLS
@@ -133,7 +133,7 @@ GtkWidget *gtk_gl_canvas_new(void);
  * Enumerates all visuals supported for context creation on this canvas.
  * If querying this information fails, an empty list is returned.
  *
- * Use #gtk_gl_choose_visuals to filter and sort the visuals returned by this
+ * Use #gtk_gl_choose_visuals() to filter and sort the visuals returned by this
  * function.
  *
  * Returns: A list of supported visuals
@@ -153,7 +153,7 @@ GtkGLVisualList *gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas);
  * This function can not create OpenGL contexts > 3.0 reliably on all devices
  * as version 3.1 introduces deprecation, which requires explicit version
  * number handling - If you need recent OpenGL funcionality, use
- * #gtk_gl_canvas_create_context_with_version instead.
+ * #gtk_gl_canvas_create_context_with_version() instead.
  *
  * Returns: Whether the context was created successfully
  */
@@ -173,7 +173,7 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
  * current to the calling thread. If the canvas already has a context, this
  * will fail.
  *
- * Unlike gtk_gl_canvas_create_context, this function allows the user to
+ * Unlike #gtk_gl_canvas_create_context(), this function allows the user to
  * specify the desired GL version and profile. Use this to create contexts
  * with an OpenGL version > 3.0.
  *
@@ -182,6 +182,58 @@ gboolean gtk_gl_canvas_create_context(GtkGLCanvas *canvas,
 gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
         const GtkGLVisual *visual, guint ver_major, guint ver_minor,
         GtkGLProfile profile);
+
+
+/**
+ * gtk_gl_canvas_auto_create_context:
+ * @canvas: The canvas
+ * @requirements: An array of #GtkGLRequirement, terminated by #GTK_GL_LIST_END
+ *
+ * Chooses a minimal #GtkGLVisual according to the requirements pareameter and
+ * creates a new OpenGL context on a #GtkGLCanvas, making the context
+ * current to the calling thread. If the canvas already has a context, this
+ * will fail.
+ *
+ * For finer framebuffer control, use #gtk_gl_canvas_enumerate_visuals and
+ * #gtk_gl_canvas_create_context() .
+ *
+ * This function can not create OpenGL contexts > 3.0 reliably on all devices
+ * as version 3.1 introduces deprecation, which requires explicit version
+ * number handling - If you need recent OpenGL funcionality, use
+ * #gtk_gl_canvas_auto_create_context_with_version() instead.
+ *
+ * Returns: Whether the context was created successfully
+ */
+gboolean gtk_gl_canvas_auto_create_context(GtkGLCanvas *canvas,
+        const GtkGLRequirement *requirements);
+
+
+/**
+ * gtk_gl_canvas_auto_create_context_with_version:
+ * @canvas: The canvas
+ * @requirements: An array of #GtkGLRequirement, terminated by #GTK_GL_LIST_END
+ * @ver_major: The OpenGL major version, e.g. 3
+ * @ver_minor: The OpenGL minor version, e.g. 1
+ * @profile: The OpenGL profile (ignored if the version is < 3.1)
+ *
+ * Chooses a minimal #GtkGLVisual according to the requirements pareameter and
+ * creates a new OpenGL context on a #GtkGLCanvas, making the context
+ * current to the calling thread. If the canvas already has a context, this
+ * will fail.
+ *
+ * For finer framebuffer control, use #gtk_gl_canvas_enumerate_visuals and
+ * #gtk_gl_canvas_create_context_with_version() .
+ *
+ * Unlike #gtk_gl_canvas_create_context(), this function allows the user to
+ * specify the desired GL version and profile. Use this to create contexts
+ * with an OpenGL version > 3.0.
+ *
+ * Returns: Whether the context was created successfully
+ */
+gboolean gtk_gl_canvas_auto_create_context_with_version(GtkGLCanvas *canvas,
+        const GtkGLRequirement *requirements, guint ver_major, guint ver_minor,
+        GtkGLProfile profile);
+
 
 /**
  * gtk_gl_canvas_destroy_context:

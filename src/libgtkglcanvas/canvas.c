@@ -271,6 +271,34 @@ gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
 }
 
 
+#define AUTO_CREATE_CONTEXT(create_expr) \
+    GtkGLVisualList *visuals, *choice; \
+    gboolean success; \
+    visuals = gtk_gl_canvas_enumerate_visuals(canvas); \
+    choice = gtk_gl_choose_visuals(visuals, requirements); \
+    success = choice->count && (create_expr); \
+    gtk_gl_visual_list_free(choice); \
+    gtk_gl_visual_list_free(visuals); \
+    return success;
+
+
+gboolean
+gtk_gl_canvas_auto_create_context(GtkGLCanvas *canvas,
+        const GtkGLRequirement *requirements) {
+    AUTO_CREATE_CONTEXT(gtk_gl_canvas_create_context(canvas,
+            choice->entries[0]))
+}
+
+
+gboolean
+gtk_gl_canvas_auto_create_context_with_version(GtkGLCanvas *canvas,
+        const GtkGLRequirement *requirements, guint ver_major, guint ver_minor,
+        GtkGLProfile profile) {
+    AUTO_CREATE_CONTEXT(gtk_gl_canvas_create_context_with_version(canvas,
+            choice->entries[0], ver_major, ver_minor, profile))
+}
+
+
 void
 gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);

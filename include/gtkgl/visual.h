@@ -34,7 +34,7 @@
  * underlying native window.
  *
  * The available visuals can be listed via #gtk_gl_canvas_enumerate_visuals()
- * and filtered to fit the user's needs via #gtk_gl_choose_visuals - They
+ * and filtered to fit the user's needs via #gtk_gl_choose_visuals() - They
  * cannot be modified, however.
  */
 
