@@ -58,7 +58,12 @@
  * @Title: GtkGLCanvas
  * @Short_Description: The GtkGLCanvas widget type
  *
- * Foo bar
+ * A #GtkGLCanvas is a widget providing an OpenGL drawing surface. It can be
+ * queried for its supported Visuals via #gtk_gl_canvas_enumerate_visuals,
+ * which can the be used to create an OpenGL rendering context inside the
+ * canvas widget via #gtk_gl_canvas_create_context . Legacy versions are
+ * supported as well as modern contexts with using version and profile
+ * specifications in #gtk_gl_canvas_create_context_with_version .
  */
 
 G_BEGIN_DECLS
@@ -77,17 +82,21 @@ G_BEGIN_DECLS
         GTK_GL_TYPE_CANVAS, GtkGLCanvasClass))
 
 
-/// An OpenGL context profile as available in OpenGL versions > 3.0
+/**
+ * GtkGLProfile:
+ * @GTK_GL_CORE_PROFILE: The core profile, only supporting non-deprecated
+ *      features
+ * @GTK_GL_COMPATIBILITY_PROFILE: The compatibility profile, supporting both
+ *      non-deprecated and deprecated features (not available for all OpenGL
+ *      versions, depending on the driver)
+ * @GTK_GL_ES_PROFILE: The OpenGL ES profile, supporting only features in the
+ *      OpenGL ES specification. This is a subset of #GTK_GL_CORE_PROFILE
+ *
+ * OpenGL profiles as used in OpenGL versions > 3.0.
+ */
 typedef enum _GtkGLProfile {
-    /// The core profile, only supporting non-deprecated features
     GTK_GL_CORE_PROFILE,
-
-    /// The compatibility profile, supporting both non-deprecated and
-    /// deprecated features
     GTK_GL_COMPATIBILITY_PROFILE,
-
-    /// The OpenGL ES profile, supporting only features in the OpenGL ES
-    /// specification
     GTK_GL_ES_PROFILE
 } GtkGLProfile;
 
@@ -106,11 +115,6 @@ typedef struct _GtkGLCanvas GtkGLCanvas;
 typedef struct _GtkGLCanvasClass GtkGLCanvasClass;
 
 
-/**
- * gtk_gl_canvas_get_type:
- * Returns type information for @ref GtkGLCanvas.
- * @return The type information
- */
 GType gtk_gl_canvas_get_type(void);
 
 
@@ -182,6 +186,7 @@ gboolean gtk_gl_canvas_create_context_with_version(GtkGLCanvas *canvas,
 /**
  * gtk_gl_canvas_destroy_context:
  * @canvas: The canvas
+ *
  * Destroys an active context on a #GtkGLCanvas. If the canvas does not have
  * a context, this is a no-op.
  */
@@ -191,6 +196,7 @@ void gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas);
 /**
  * gtk_gl_canvas_has_context:
  * @canvas: The canvas
+ *
  * Queries for an active OpenGL context.
  * Returns: Whether a #GtkGLCanvas has an active context
  */
@@ -200,6 +206,7 @@ gboolean gtk_gl_canvas_has_context(GtkGLCanvas *canvas);
 /**
  * gtk_gl_canvas_make_current:
  * @canvas: The canvas
+ *
  * Makes the OpenGL context of a #GtkGLCanvas current to the calling thread.
  * After this, any calls to gl* functions will refer to the context of this
  * canvas. If the canvas does not have a context, this is a no-op.
@@ -210,6 +217,7 @@ void gtk_gl_canvas_make_current(GtkGLCanvas* canvas);
 /**
  * gtk_gl_canvas_display_frame:
  * @canvas: The canvas
+ *
  * Swaps the front and back buffer in a double-buffered GL context or flushes
  * all GL draw calls in a single-buffered context.
  *

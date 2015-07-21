@@ -28,7 +28,14 @@
  * @Title: Visuals
  * @Short_Description: Platform independent framebuffer configuration
  *
- * Foo bar
+ * Visuals are handles to platform-specific framebuffer configurations used
+ * in the context creation of #GtkGLCanvas . They are used to select attributes
+ * like color space, depth buffering and multisampling capabilities of the
+ * underlying native window.
+ *
+ * The available visuals can be listed via #gtk_gl_canvas_enumerate_visuals()
+ * and filtered to fit the user's needs via #gtk_gl_choose_visuals - They
+ * cannot be modified, however.
  */
 
 
