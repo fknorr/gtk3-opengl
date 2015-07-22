@@ -174,16 +174,22 @@ gtk_gl_canvas_unrealize(GtkWidget *wid) {
 
 
 static void
-gtk_gl_canvas_init(GtkGLCanvas *self) {
-    GtkWidget *wid = (GtkWidget*)self;
-    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(wid);
+gtk_gl_canvas_init(GtkGLCanvas *canvas) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 
 	priv->native = gtk_gl_canvas_native_new();
 	priv->is_dummy = TRUE;
 
-    gtk_widget_set_can_focus(wid, TRUE);
-    gtk_widget_set_receives_default(wid, TRUE);
-    gtk_widget_set_has_window(wid, TRUE);
+    gtk_widget_set_can_focus(GTK_WIDGET(canvas), TRUE);
+    gtk_widget_set_receives_default(GTK_WIDGET(canvas), TRUE);
+    gtk_widget_set_has_window(GTK_WIDGET(canvas), TRUE);
+
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(canvas),
+            "double-buffered")) {
+        g_object_set(canvas, "double-buffered", FALSE, NULL);
+    } else {
+        g_warning("Unable to disable double buffering on canvas widget");
+    }
 }
 
 

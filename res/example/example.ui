@@ -99,7 +99,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="double_buffered">False</property>
                 <signal name="destroy" handler="example_stop_animation" swapped="no"/>
                 <signal name="draw" handler="example_draw" swapped="no"/>
                 <signal name="leave-notify-event" handler="example_mouse_leave" swapped="no"/>

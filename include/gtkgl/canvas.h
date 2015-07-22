@@ -78,7 +78,7 @@ G_BEGIN_DECLS
         GTK_GL_TYPE_CANVAS, GtkGLCanvasClass))
 #define GTK_GL_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), \
         GTK_GL_TYPE_CANVAS_CLASS))
-#define GTK_GL_CANVAS_GET_CLASS(obj) (G_TYPE_INSTANCE((obj), \
+#define GTK_GL_CANVAS_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS((obj), \
         GTK_GL_TYPE_CANVAS, GtkGLCanvasClass))
 
 
