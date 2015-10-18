@@ -91,9 +91,7 @@ AC_DEFINE_UNQUOTED([SOURCE_DIR], ["$srcdir"], [Absolute Source Directory])
 AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
 AC_SUBST(GLADEUI_PIXMAPDIR, "$ac_gladeui_pixmapdir")
 
-pkgconfig_dir="`$PKG_CONFIG --debug 2>&1 | sed -ne "/Scanning directory /{s///;s/'//gp;q;}"`"
-AC_SUBST(PKG_CONFIG_DIR, "$pkgconfig_dir")
-
+AC_CONFIG_FILES([src/libgtkglcanvas/gtkglcanvas.pc])
 
 AC_OUTPUT([
 Makefile

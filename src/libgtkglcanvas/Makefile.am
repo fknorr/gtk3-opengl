@@ -49,10 +49,7 @@ gladepix16dir = $(GLADEUI_PIXMAPDIR)/hicolor/16x16/actions/
 gladepix16_DATA = $(top_srcdir)/res/glade/pixmaps/16x16/widget-gtkgl-glcanvas.png
 endif
 
-gtkglcanvas.pc:
-	sed "s!%!$(prefix)!" $(top_srcdir)/res/gtkglcanvas/gtkglcanvas.pc.tmpl > gtkglcanvas.pc
-
-pkgconfigdir = $(PKG_CONFIG_DIR)
+pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gtkglcanvas.pc
 
 __top_builddir__libgtkglcanvas_la_CFLAGS = \

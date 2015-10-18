@@ -8,12 +8,13 @@ debug/
 compile
 config.guess
 config.sub
+config.h.in
 configure
 depcomp
 install-sh
 mingw/
 missing
-*.in
+Makefile.in
 *#
 *~
 callgrind.out.*
