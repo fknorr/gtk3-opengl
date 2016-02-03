@@ -252,7 +252,7 @@ void gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas);
  * Queries for an active OpenGL context.
  * Returns: Whether a #GtkGLCanvas has an active context
  */
-gboolean gtk_gl_canvas_has_context(GtkGLCanvas *canvas);
+gboolean gtk_gl_canvas_has_context(const GtkGLCanvas *canvas);
 
 
 /**

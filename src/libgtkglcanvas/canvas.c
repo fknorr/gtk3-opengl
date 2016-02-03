@@ -317,7 +317,7 @@ gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas) {
 
 
 gboolean
-gtk_gl_canvas_has_context(GtkGLCanvas *canvas) {
+gtk_gl_canvas_has_context(const GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	return !priv->is_dummy;
 }
