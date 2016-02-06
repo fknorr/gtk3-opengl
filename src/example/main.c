@@ -17,11 +17,13 @@
  * along with libgtkglcanvas. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <math.h>
+
 #include <gtk/gtk.h>
 #include <gtkgl/visual.h>
 #include <gtkgl/canvas.h>
-#include <GL/glew.h>
-#include <math.h>
+
+#include <epoxy/gl.h>
 
 
 // Widgets as fetched from the GtkBuilder
@@ -151,7 +153,7 @@ init_context(void) {
 	 *   - Version > 3.1 and GL_CONTEXT_COMPATIBILITY_PROFILE_BIT is set
 	 */
 	gboolean compatibility_context
-	 		= !GLEW_VERSION_3_1 || GLEW_ARB_compatibility;
+	 		= epoxy_gl_version() < 31 || epoxy_has_gl_extension("GL_ARB_compatibility");
 	if (!compatibility_context) {
 		glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
 		compatibility_context = !!(mask &GL_CONTEXT_COMPATIBILITY_PROFILE_BIT);
@@ -160,8 +162,8 @@ init_context(void) {
 	glEnable(GL_MULTISAMPLE);
 
 	has_direct_mode = compatibility_context;
-	has_shaders = GLEW_VERSION_2_0 && compatibility_context;
-	has_vaos = GLEW_VERSION_3_0;
+	has_shaders = epoxy_gl_version() >= 20 && compatibility_context;
+	has_vaos = epoxy_gl_version() >= 30;
 
 	if (has_shaders || has_vaos) {
 	    program = glCreateProgram();

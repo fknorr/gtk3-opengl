@@ -49,7 +49,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <GL/glxew.h>
+#include <epoxy/gl.h>
+#include <epoxy/glx.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
@@ -58,10 +59,6 @@
 #include <gtkgl/visual.h>
 #include <gtkgl/canvas.h>
 #include "canvas_impl.h"
-
-
-// Whether init_glxew has run (only required once)
-static gboolean glxew_initialized = FALSE;
 
 
 /* X Error handling routines:
@@ -112,81 +109,17 @@ end_capture_xerrors(Display *dpy) {
 }
 
 
-/* Creates a dummy context to call glewInit() on in order to initialize
- * GLEW variables and function for using GLX extensions.
- */
-static gboolean
-init_glxew(Display *dpy, gint screen) {
-    static gint attr_sets[][3] = {
-            { GLX_RGBA, GLX_DOUBLEBUFFER, None },
-            { GLX_RGBA, None },
-            { GLX_DOUBLEBUFFER, None },
-            { None }
-        };
-
-    gint erb, evb;
-    XVisualInfo *vi = NULL;
-    GLXContext cxt;
-    Window wnd;
-    size_t i;
-    gboolean dummy_created = FALSE;
-
-    if (glxew_initialized) return TRUE;
-
-    assert(dpy);
-    begin_capture_xerrors();
-
-    if (!glXQueryExtension(dpy, &erb, &evb) || have_xerror(dpy)) goto end;
-
-    for (i = 0; i < 4; ++i) {
-        if ((vi = glXChooseVisual(dpy, screen, attr_sets[i]))
-                || have_xerror(dpy)) {
-            break;
-        }
-    }
-    if (!vi) goto end;
-
-    if (!(cxt = glXCreateContext(dpy, vi, None, True)) || have_xerror(dpy))
-        goto end_vi;
-    if (!(wnd = XCreateSimpleWindow(dpy, RootWindow(dpy, screen), 0, 0, 1, 1,
-            1, 0, 0)) || have_xerror(dpy)) goto end_cxt;
-    if (glXMakeCurrent(dpy, wnd, cxt) || have_xerror(dpy)) {
-        dummy_created = TRUE;
-        glewExperimental = GL_TRUE;
-        if (glewInit() != GLEW_OK) {
-            g_warning("Unable to initialize GLXEW");
-        } else {
-            glxew_initialized = TRUE;
-        }
-    }
-    XDestroyWindow(dpy, wnd);
-end_cxt:
-    glXDestroyContext(dpy, cxt);
-end_vi:
-    XFree(vi);
-end:
-    if (end_capture_xerrors(dpy)) {
-        g_warning("Received X window system error during GLXEW initialization");
-        return FALSE;
-    }
-    if (!dummy_created) {
-        g_warning("Unable to create dummy context for GLXEW initialization");
-        return FALSE;
-    }
-    return TRUE;
-}
-
-
 // Describes a X visual for create_context / describe_visual.
 struct _GtkGLVisual {
     Display *dpy;
+    int screen;
     GLXFBConfig cfg;
 };
 
 
 static GtkGLVisual *
-gtk_gl_visual_new(Display *dpy, GLXFBConfig cfg) {
-    GtkGLVisual visual = { dpy, cfg };
+gtk_gl_visual_new(Display *dpy, int screen, GLXFBConfig cfg) {
+    GtkGLVisual visual = { dpy, screen, cfg };
     return g_memdup(&visual, sizeof visual);
 }
 
@@ -260,11 +193,8 @@ gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
         return FALSE;
     }
 
-    if (init_glxew(native->dpy, gdk_x11_screen_get_screen_number(
-            gdk_window_get_screen(priv->win)))) {
-        native->initialized = TRUE;
-    }
-    return native->initialized;
+    native->initialized = TRUE;
+    return TRUE;
 }
 
 
@@ -312,7 +242,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
     assert(canvas);
 
-    if (!gtk_gl_canvas_init_native(canvas) || !GLXEW_VERSION_1_3) {
+    if (!gtk_gl_canvas_init_native(canvas) || epoxy_glx_version(native->dpy, native->screen) < 13) {
         return gtk_gl_visual_list_new(TRUE, 0);
     }
 
@@ -333,7 +263,7 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
             &vtype);
         if ((targets & GLX_WINDOW_BIT)
                 && visual_type_matches(vtype, native->visual_info.class)) {
-            list->entries[j++] = gtk_gl_visual_new(native->dpy, fbconfigs[i]);
+            list->entries[j++] = gtk_gl_visual_new(native->dpy, native->screen, fbconfigs[i]);
         }
     }
     if (end_capture_xerrors(native->dpy)) {
@@ -352,8 +282,7 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 
     assert(visual);
     assert(out);
-    assert(glxew_initialized);
-    assert(GLXEW_VERSION_1_3);
+    assert(epoxy_glx_version(visual->dpy, visual->screen) >= 13);
 
 #define QUERY(attr) \
     (glXGetFBConfigAttrib(visual->dpy, visual->cfg, GLX_##attr, &value), value)
@@ -393,10 +322,10 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     out->transparent_blue = QUERY(TRANSPARENT_BLUE_VALUE);
     out->transparent_alpha = QUERY(TRANSPARENT_ALPHA_VALUE);
 
-    if (GLXEW_VERSION_1_4) {
+    if (epoxy_glx_version(visual->dpy, visual->screen) >= 14) {
         out->sample_buffers = QUERY(SAMPLE_BUFFERS);
         out->samples_per_pixel = QUERY(SAMPLES);
-    } else if (GLXEW_ARB_multisample) {
+    } else if (epoxy_has_glx_extension(visual->dpy, visual->screen, "GLX_ARB_multisample")) {
         out->sample_buffers = QUERY(SAMPLE_BUFFERS_ARB);
         out->samples_per_pixel = QUERY(SAMPLES_ARB);
     } else {
@@ -420,9 +349,8 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
     GtkGLCanvas_NativePriv *native = priv->native;
 
     assert(visual);
-    assert(glxew_initialized);
     assert(native->initialized);
-    assert(GLXEW_VERSION_1_3);
+    assert(epoxy_glx_version(visual->dpy, visual->screen) >= 13);
 
     begin_capture_xerrors();
 
@@ -465,13 +393,6 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 
     if (end_capture_xerrors(native->dpy)) {
         g_warning("Received X error during context creation");
-        failed = TRUE;
-    }
-
-    // Do glewInit() again in order to get the correct function pointers
-    // for the created context
-    if (glewInit() != GLEW_OK) {
-        g_warning("glewInit() failed after context creation");
         failed = TRUE;
     }
 
@@ -523,7 +444,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         if (!gtk_gl_canvas_native_create_context(canvas, visual)) {
             return FALSE;
         }
-    } else if (GLXEW_ARB_create_context) {
+    } else if (epoxy_has_glx_extension(native->dpy, native->screen, "GLX_ARB_create_context")) {
         /* (Core) contexts > 3.0 cannot be created via the legacy
          * glXCreateContext because the deprecation functionality requires
          * specification of the target version.
@@ -534,10 +455,10 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
                 None, None, None
         };
         /* OpenGL 3.1 does not know about compatibility profiles, so
-         * compatibility is checked later via GLEW_ARB_compatibility in that
+         * compatibility is checked later via GLX_ARB_compatibility in that
          * case
          */
-        if (GLXEW_ARB_create_context_profile) {
+        if (epoxy_has_glx_extension(native->dpy, native->screen, "GLX_ARB_create_context_profile")) {
             attrib_list[4] = GLX_CONTEXT_PROFILE_MASK_ARB;
             switch (profile) {
                 case GTK_GL_CORE_PROFILE:
@@ -549,7 +470,10 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
                     break;
 
                 case GTK_GL_ES_PROFILE:
-                    if (!GLXEW_EXT_create_context_es_profile) return FALSE;
+                    if (!epoxy_has_glx_extension(native->dpy, native->screen,
+                            "GLX_EXT_create_context_es_profile")) {
+                        return FALSE;
+                    }
                     attrib_list[5] = GLX_CONTEXT_ES_PROFILE_BIT_EXT;
                     break;
 
@@ -583,7 +507,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         }
         if (cxt_major == 3 && cxt_minor == 1
                 && profile == GTK_GL_COMPATIBILITY_PROFILE
-                && !GLEW_ARB_compatibility) {
+                && !epoxy_has_gl_extension("ARB_compatibility")) {
             return FALSE;
         }
         return TRUE;
@@ -609,7 +533,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
     }
     if (native->win) {
         // See the GLX_MESA_release_buffers docs
-        if (GLXEW_MESA_release_buffers) {
+        if (epoxy_has_glx_extension(native->dpy, native->screen, "MESA_release_buffers")) {
             glXReleaseBuffersMESA(native->dpy, native->win);
         }
         glXDestroyWindow(native->dpy, native->win);

@@ -62,8 +62,8 @@ esac
 
 PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],
     [AC_MSG_ERROR([Missing dependency: GTK+3])])
-PKG_CHECK_MODULES([GLEW], [glew], [],
-    [AC_MSG_ERROR([Missing dependency: libGLEW])])
+PKG_CHECK_MODULES([Epoxy], [epoxy], [],
+    [AC_MSG_ERROR([Missing dependency: Epoxy])])
 
 PKG_CHECK_MODULES([GLADEUI], [gladeui-2.0],
     [have_glade=yes;

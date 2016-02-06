@@ -56,12 +56,12 @@ __top_builddir__libgtkglcanvas_la_CFLAGS = \
     -I$(top_srcdir)/include \
 	$(GTK_CFLAGS) \
 	$(OpenGL_CFLAGS) \
-	$(GLEW_CFLAGS) \
+	$(Epoxy_CFLAGS) \
 	$(platform_def) \
 	$(platform_cflags)
 
 __top_builddir__libgtkglcanvas_la_LIBADD = \
 	$(GTK_LIBS) \
 	$(OpenGL_LIBS) \
-	$(GLEW_LIBS) \
+	$(Epoxy_LIBS) \
 	$(platform_libs)

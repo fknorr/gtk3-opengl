@@ -49,7 +49,8 @@
 
 #include <gtkgl/canvas.h>
 #include "canvas_impl.h"
-#include <GL/glew.h>
+
+#include <epoxy/gl.h>
 
 
 struct _GtkGLCanvas {

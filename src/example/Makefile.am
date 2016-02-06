@@ -27,12 +27,12 @@ __top_builddir__example_LDADD = \
 	-lm \
 	$(GTK_LIBS) \
 	$(OpenGL_LIBS) \
-	$(GLEW_LIBS)
+	$(Epoxy_LIBS)
 
 __top_builddir__example_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(OpenGL_CFLAGS) \
-	$(GLEW_CFLAGS) \
+	$(Epoxy_CFLAGS) \
     $(GTK_CFLAGS)
 
 if PLATFORM_WIN32

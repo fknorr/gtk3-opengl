@@ -19,14 +19,17 @@
 
 #include <gtkgl/canvas.h>
 #include "canvas_impl.h"
+
 #include <stdlib.h>
-#include <windows.h>
 #include <assert.h>
+#include <windows.h>
+
 #include <gtk/gtk.h>
 #include <gdk/gdkwin32.h>
 #include <glib-object.h>
-#include <GL/glew.h>
-#include <GL/wglew.h>
+
+#include <epoxy/gl.h>
+#include <epoxy/wgl.h>
 
 
 // Returns a human-readable error message  based GetLastError. The result is
@@ -53,95 +56,6 @@ w32_canvas_wnd_proc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam) {
         default:
             return DefWindowProc(hWnd, msg, wParam, lParam);
     }
-}
-
-
-static gboolean wglew_initialized = FALSE;
-
-
-// Creates the child-window class and resolves wglChoosePixelFormatARB.
-// Global, a noop except for the first call, and thread-safe.
-static gboolean
-init_wglew(void) {
-    WNDCLASSEX wnd_class;
-    HWND dummy;
-    gboolean success = FALSE;
-    HDC dc;
-    HGLRC glc;
-	PIXELFORMATDESCRIPTOR pfd;
-	gint pf;
-
-	if (wglew_initialized) return TRUE;
-
-	// Register class for all GLCanvas windows
-    ZeroMemory(&wnd_class, sizeof(WNDCLASSEX));
-    wnd_class.cbSize = sizeof(WNDCLASSEX);
-    wnd_class.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
-    wnd_class.hCursor = LoadCursor(NULL,IDC_ARROW);
-    wnd_class.hInstance = GetModuleHandle(NULL);
-    wnd_class.lpfnWndProc = w32_canvas_wnd_proc;
-    wnd_class.lpszClassName = "GLCanvas";
-    wnd_class.style = CS_OWNDC; // WGL requires an owned DC
-
-    if (!RegisterClassEx(&wnd_class)) {
-		g_warning("Unable to register window class in WGLEW initialization");
-		goto end;
-	}
-
-    // Create an invisible window with a dummy GL context in order to
-    // be able to call glewInit()
-    dummy = CreateWindowEx(0, "GLCanvas", "", 0, 0, 0, 10,
-			10, NULL, NULL, GetModuleHandle(NULL), NULL);
-	if (!dummy) {
-		g_warning("Unable to create dummy window in WGLEW initialization");
-		goto end;
-	}
-
-	// Create a GL context
-    if (!(dc = GetDC(dummy))) {
-		g_warning("Unable to retrieve device context in WGLEW initialization");
-		goto free_window;
-	}
-
-	ZeroMemory(&pfd, sizeof pfd);
-	pfd.nSize = sizeof pfd;
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	if (!((pf = ChoosePixelFormat(dc, &pfd)) && SetPixelFormat(dc, pf, &pfd))) {
-		g_warning("Unable to set pixel format in WGLEW initialization");
-		goto free_dc;
-	}
-
-	if (!(glc = wglCreateContext(dc))) {
-		g_warning("Unable to create GL context in WGLEW initialization");
-		goto free_dc;
-	}
-
-	if (!wglMakeCurrent(dc, glc)) {
-		g_warning("Unable to attach context in WGLEW initialization");
-		goto free_glc;
-	}
-
-	if (glewInit() == GLEW_OK) {
-		wglew_initialized = TRUE;
-	} else {
-		g_warning("glewInit() failed in WGLEW initialization");
-	}
-
-free_glc:
-    wglMakeCurrent(dc, NULL);
-    wglDeleteContext(glc);
-
-free_dc:
-    ReleaseDC(dummy, dc);
-
-free_window:
-    DestroyWindow(dummy);
-
-end:
-	if (!wglew_initialized) warn_last_error();
-	return wglew_initialized;
 }
 
 
@@ -275,11 +189,6 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	UINT n_formats, i;
 	GtkGLVisualList *list;
 
-	if (!init_wglew()) {
-		g_warning("Unable to initialize WGLEW, returning empty visual list");
-		return gtk_gl_visual_list_new(FALSE, 0);
-	}
-
 	if (!native->win) {
 		create_child_window(canvas);
 	}
@@ -291,8 +200,9 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 	}
 
 	formats = g_malloc(MAX_NFORMATS * sizeof *formats);
-	if (!WGLEW_ARB_pixel_format || !wglChoosePixelFormatARB(native->dc,
-			iattribs, fattribs, MAX_NFORMATS, formats, &n_formats)) {
+	if (!epoxy_has_wgl_extension(native->dc, "WGL_ARB_pixel_format")
+            || !wglChoosePixelFormatARB(native->dc,
+			     iattribs, fattribs, MAX_NFORMATS, formats, &n_formats)) {
 		g_warning("Unable to wglChoosePixelFormatARB(), returning "
 				"empty visual list");
 		warn_last_error();
@@ -315,7 +225,6 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 
     assert(visual);
     assert(out);
-    assert(wglew_initialized);
 
 #define QUERY(a) \
     (attr = WGL_##a##_ARB, ok = wglGetPixelFormatAttribivARB(visual->dc, \
@@ -353,7 +262,7 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
     out->transparent_blue = QUERY(TRANSPARENT_BLUE_VALUE);
     out->transparent_alpha = QUERY(TRANSPARENT_ALPHA_VALUE);
 
-    if (WGLEW_ARB_multisample) {
+    if (!epoxy_has_wgl_extension(visual->dc, "WGL_ARB_multisample")) {
         out->sample_buffers = QUERY(SAMPLE_BUFFERS);
         out->samples_per_pixel = QUERY(SAMPLES);
     } else {
@@ -372,11 +281,6 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
 	assert(visual);
-
-    if (!wglew_initialized) {
-		g_warning("WGLEW not initialized, aborting context creation");
-		return FALSE;
-	}
 
 	if (!native->win) {
 		create_child_window(canvas);
@@ -417,14 +321,6 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 		return FALSE;
 	}
 
-    // Do glewInit() again in order to get the correct function pointers
-    // for the created context
-    if (glewInit() != GLEW_OK) {
-        g_warning("glewInit() failed after context creation");
-		gtk_gl_canvas_native_destroy_context(canvas);
-        return FALSE;
-    }
-
 	attr = WGL_DOUBLE_BUFFER_ARB;
 	wglGetPixelFormatAttribivARB(visual->dc, visual->pf, 0, 1, &attr, &value);
 	priv->double_buffered = !!value;
@@ -463,7 +359,7 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
         if (!gtk_gl_canvas_native_create_context(canvas, visual)) {
             return FALSE;
         }
-    } else if (WGLEW_ARB_create_context) {
+    } else if (epoxy_has_wgl_extension(visual->dc, "WGL_ARB_create_context")) {
         /* (Core) contexts > 3.0 cannot be created via the legacy
          * wglCreateContext because the deprecation functionality requires
          * specification of the target version.
@@ -474,10 +370,10 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
                 0, 0, 0
         };
         /* OpenGL 3.1 does not know about compatibility profiles, so
-         * compatibility is checked later via GLEW_ARB_compatibility in that
+         * compatibility is checked later via WGL_ARB_compatibility in that
          * case
          */
-        if (WGLEW_ARB_create_context_profile) {
+        if (epoxy_has_wgl_extension(visual->dc, "WGL_ARB_create_context_profile")) {
             attrib_list[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
             switch (profile) {
                 case GTK_GL_CORE_PROFILE:
@@ -489,7 +385,10 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
                     break;
 
                 case GTK_GL_ES_PROFILE:
-                    if (!WGLEW_EXT_create_context_es_profile) return FALSE;
+                    if (!epoxy_has_wgl_extension(visual->dc,
+                            "WGL_ARB_create_context_es_profile")) {
+                        return FALSE;
+                    }
                     attrib_list[5] = WGL_CONTEXT_ES_PROFILE_BIT_EXT;
                     break;
 
@@ -514,22 +413,13 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
      * context may not support the compatibility mode even if requested (see
      * above).
      */
-    cxt_version = (const char*) glGetString(GL_VERSION);
-    if (sscanf(cxt_version, "%u.%u", &cxt_major, &cxt_minor) == 2) {
-        if (cxt_major < ver_major
-                || (cxt_major == ver_major && cxt_minor < ver_minor)) {
-            return FALSE;
-        }
-        if (cxt_major == 3 && cxt_minor == 1
-                && profile == GTK_GL_COMPATIBILITY_PROFILE
-                && !GLEW_ARB_compatibility) {
-            return FALSE;
-        }
-        return TRUE;
+    int version = epoxy_gl_version();
+    if (version < ver_major * 10 + ver_minor) return FALSE;
+    if (version == 31 && profile == GTK_GL_COMPATIBILITY_PROFILE
+            && !epoxy_has_gl_extension("GL_ARB_compatibility")) {
+        return FALSE;
     }
-
-    gtk_gl_canvas_native_destroy_context(canvas);
-    return FALSE;
+    return TRUE;
 }
 
 
