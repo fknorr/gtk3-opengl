@@ -13,7 +13,7 @@ contexts.
 ![Visual Selection Screenshot](docs/screenshots/visuals.png)
 
 The library is integrated into the Glade UI designer and GNU's pkg-config
-mechanism. GtkGLCanvas closely interacts with GLEW for extension loading and
-requires libGLEW to be present on the target system.
+mechanism. GtkGLCanvas uses Epoxy for extension loading and requires libEpoxy
+to be present on the target system.
 
 The project is released under the GNU GPL Version 3 (See LICENSE for details).
