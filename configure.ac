@@ -18,7 +18,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Created by Anjuta application wizard.
 
 
-AC_INIT(gtkglcanvas, 0.1)
+AC_INIT(gtkglcanvas, 0.2)
 
 LT_INIT([])
 
@@ -90,6 +90,7 @@ AC_DEFINE_UNQUOTED([SOURCE_DIR], ["$srcdir"], [Absolute Source Directory])
 
 AC_SUBST(GLADEUI_CATDIR, "$ac_gladeui_catdir")
 AC_SUBST(GLADEUI_PIXMAPDIR, "$ac_gladeui_pixmapdir")
+AC_SUBST(VERSION_INFO, "-version-info 1:1:0")
 
 AC_CONFIG_FILES([src/libgtkglcanvas/gtkglcanvas.pc])
 

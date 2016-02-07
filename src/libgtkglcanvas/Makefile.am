@@ -65,3 +65,6 @@ __top_builddir__libgtkglcanvas_la_LIBADD = \
 	$(OpenGL_LIBS) \
 	$(Epoxy_LIBS) \
 	$(platform_libs)
+
+__top_builddir__libgtkglcanvas_la_LDFLAGS = \
+    $(VERSION_INFO)
