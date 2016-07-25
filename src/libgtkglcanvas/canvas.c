@@ -74,7 +74,6 @@ static gboolean gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr);
 
 static gboolean
 gtk_gl_canvas_draw(GtkWidget *wid, cairo_t *cr) {
-    printf("draw!\n");
 	if (gtk_gl_canvas_has_context(GTK_GL_CANVAS(wid))) {
 		return FALSE;
     }
@@ -176,7 +175,6 @@ gtk_gl_canvas_resize_surface_to_windw(GtkGLCanvas *canvas) {
     if (priv->surface) {
         GtkAllocation allocation;
         gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
-        printf("resize %d, %d, %d, %d\n", allocation.x, allocation.y, allocation.width, allocation.height);
 
         gdk_window_move_resize(priv->surface, allocation.x, allocation.y,
             allocation.width, allocation.height);
@@ -187,7 +185,6 @@ gtk_gl_canvas_resize_surface_to_windw(GtkGLCanvas *canvas) {
 static gboolean
 gtk_gl_canvas_configure(GtkWidget *wid, GdkEvent *event) {
     g_assert(GTK_GL_IS_CANVAS(wid));
-    printf("Configure!\n");
 
     gdk_window_move_resize(gtk_widget_get_window(wid),
             event->configure.x, event->configure.y,
