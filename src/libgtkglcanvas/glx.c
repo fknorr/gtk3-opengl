@@ -48,6 +48,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include <epoxy/gl.h>
 #include <epoxy/glx.h>
@@ -198,25 +199,6 @@ gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
 }
 
 
-void
-gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
-	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
-    GtkGLCanvas_NativePriv *native = priv->native;
-
-    native->initialized = FALSE;
-    native->dpy = NULL;
-    native->screen = 0;
-    native->win = 0;
-    native->glc = NULL;
-}
-
-
-void
-gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
-
-}
-
-
 static gboolean
 visual_type_matches(gint glx, gint x) {
     switch (glx) {
@@ -342,9 +324,8 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 }
 
 
-static gboolean
-gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
-        const GtkGLVisual *visual) {
+GdkWindow *
+gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
 
@@ -359,14 +340,32 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
      * window would crash upon creating a second context with a different
      * lisual
      */
-    native->win = glXCreateWindow(native->dpy, visual->cfg,
-            gdk_x11_window_get_xid(priv->win), NULL);
-    if (!native->win || have_xerror(native->dpy)) {
-        g_warning("glXCreateWindow() failed");
-        end_capture_xerrors(native->dpy);
-        return FALSE;
+    XVisualInfo *vinfo = glXGetVisualFromFBConfig(native->dpy, visual->cfg);
+    Window parent = gdk_x11_window_get_xid(priv->win);
+
+    XSetWindowAttributes swa;
+    memset(&swa, 0, sizeof swa);
+    swa.colormap = XCreateColormap(native->dpy, parent, vinfo->visual, AllocNone);
+    swa.event_mask = StructureNotifyMask;
+
+    GtkAllocation allocation;
+    gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
+
+    native->win = XCreateWindow(native->dpy, parent, 0, 0, allocation.width,
+            allocation.height, 0, vinfo->depth, InputOutput,
+            vinfo->visual, CWBorderPixel | CWColormap | CWEventMask, &swa);
+    if (native->win) {
+        XMapWindow(native->dpy, native->win);
     }
-    return TRUE;
+    
+    if (!native->win || have_xerror(native->dpy)) {
+        g_warning("Creating GLX surface window failed");
+        end_capture_xerrors(native->dpy);
+        return NULL;
+    }
+
+    return gdk_x11_window_foreign_new_for_display(
+            gdk_window_get_display(priv->win), native->win);
 }
 
 
@@ -382,8 +381,7 @@ gtk_gl_canvas_native_after_create_context(GtkGLCanvas *canvas,
 
     // Required for deciding between glFlush() and swap_buffers() in
     // display_frame()
-    glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER,
-            &attrib);
+    glXGetFBConfigAttrib(native->dpy, visual->cfg, GLX_DOUBLEBUFFER, &attrib);
     priv->double_buffered = (guint) attrib;
 
     if (!glXMakeCurrent(native->dpy, native->win, native->glc)) {
@@ -410,10 +408,6 @@ gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
     XVisualInfo *vi;
-
-    if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
-        return FALSE;
-    }
 
     vi = glXGetVisualFromFBConfig(visual->dpy, visual->cfg);
     if (!vi) {
@@ -482,9 +476,6 @@ gtk_gl_canvas_native_create_context_with_version(GtkGLCanvas *canvas,
             }
         };
 
-        if (!gtk_gl_canvas_native_before_create_context(canvas, visual)) {
-            return FALSE;
-        }
         native->glc = glXCreateContextAttribsARB(native->dpy, visual->cfg, NULL,
                 GL_TRUE, attrib_list);
         if (!gtk_gl_canvas_native_after_create_context(canvas, visual)) {

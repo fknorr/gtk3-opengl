@@ -376,6 +376,7 @@ example_draw(void) {
 
 	// Set the viewport to the entire window (scaling)
 	gtk_widget_get_allocation(GTK_WIDGET(canvas), &alloc);
+    printf("front alloc = %d, %d\n", alloc.width, alloc.height);
 	aspect = (float) alloc.width / alloc.height;
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1);
