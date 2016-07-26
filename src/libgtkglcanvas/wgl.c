@@ -98,10 +98,16 @@ gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
 
 	if (native->win) {
 		if (native->win_dc) {
-			ReleaseDC(native->win, native->win_dc);
+            if (!ReleaseDC(native->win, native->win_dc)) {
+                warn_last_error();
+                g_warning("Unable to release surface DC");
+            }
 			native->win_dc = NULL;
 		}
-		DestroyWindow(native->win);
+		if (!DestroyWindow(native->win)) {
+            warn_last_error();
+            g_warning("Unable to destroy surface window");
+        }
 		native->win = NULL;
 	}
 }
@@ -148,11 +154,20 @@ gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
 
     if (native->parent_dc) {
         if (native->dummy_glc) {
-            wglMakeCurrent(native->parent_dc, NULL);
-            wglDeleteContext(native->dummy_glc);
+            if (!wglMakeCurrent(native->parent_dc, NULL)) {
+                warn_last_error();
+                g_warning("Unable to detach dummy context");
+            }
+            if (!wglDeleteContext(native->dummy_glc)) {
+                warn_last_error();
+                g_warning("Unable to delete dummy context");
+            }
             native->dummy_glc = NULL;
         }
-        ReleaseDC(GDK_WINDOW_HWND(priv->win), native->parent_dc);
+        if (!ReleaseDC(GDK_WINDOW_HWND(priv->win), native->parent_dc)) {
+            warn_last_error();
+            g_warning("Unable to release parent window DC");
+        }
         native->parent_dc = NULL;
     }
 }
@@ -166,6 +181,7 @@ gtk_gl_canvas_native_register_window_class(void) {
             
     if (!RegisterClassEx(&klass)) {
         warn_last_error();
+        g_warning("Unable to register surface window class");
     }
 }
 
