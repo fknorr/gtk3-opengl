@@ -168,7 +168,7 @@ gtk_gl_canvas_unrealize(GtkWidget *wid) {
 
 
 static void
-gtk_gl_canvas_resize_surface_to_windw(GtkGLCanvas *canvas) {
+gtk_gl_canvas_configure_surface(GtkGLCanvas *canvas) {
     g_return_if_fail(GTK_GL_IS_CANVAS(canvas));
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 
@@ -179,6 +179,9 @@ gtk_gl_canvas_resize_surface_to_windw(GtkGLCanvas *canvas) {
         gdk_window_move_resize(priv->surface, allocation.x, allocation.y,
             allocation.width, allocation.height);
     }
+
+    gdk_display_sync(gdk_window_get_display(priv->win));
+    gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 
 
@@ -190,8 +193,7 @@ gtk_gl_canvas_configure(GtkWidget *wid, GdkEvent *event) {
             event->configure.x, event->configure.y,
             event->configure.width, event->configure.height);
 
-    gtk_gl_canvas_resize_surface_to_windw(GTK_GL_CANVAS(wid));
-	gtk_widget_queue_draw(wid);
+    gtk_gl_canvas_configure_surface(GTK_GL_CANVAS(wid));
 
     return FALSE;
 }
@@ -278,8 +280,7 @@ static void
 gtk_gl_canvas_after_create_context(GtkGLCanvas *canvas, gboolean success) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     priv->is_dummy = !success;
-    gtk_gl_canvas_resize_surface_to_windw(canvas);
-	gtk_widget_queue_draw(GTK_WIDGET(canvas));
+    gtk_gl_canvas_configure_surface(canvas);
 }
 
 
