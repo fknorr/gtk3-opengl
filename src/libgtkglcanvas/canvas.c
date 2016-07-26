@@ -276,8 +276,6 @@ gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visu
     }
     
     priv->surface = gtk_gl_canvas_native_create_surface(canvas, visual);
-    GdkWindowType type = gdk_window_get_window_type(priv->surface);
-    printf("type = %d, Child = %d\n", (int) type, (int) GDK_WINDOW_CHILD);
     if (priv->surface) {
         gdk_window_show(priv->surface);
         gdk_window_set_pass_through(priv->surface, TRUE);
