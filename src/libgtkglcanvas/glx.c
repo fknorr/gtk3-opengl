@@ -140,7 +140,7 @@ struct _GtkGLCanvas_NativePriv {
     gint screen;
 
     // The GLX window (residing inside the GtkGLCanvas window)
-    GLXWindow win;
+    Window win;
 
     // The context once created
     GLXContext glc;
@@ -357,6 +357,8 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
     if (native->win) {
         XMapWindow(native->dpy, native->win);
     }
+
+    XFree(vinfo);
     
     if (!native->win || have_xerror(native->dpy)) {
         g_warning("Creating GLX surface window failed");
@@ -518,7 +520,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 
     if (native->glc) {
         // Context is not destroyed until it is no longer current
-        glXMakeCurrent(native->dpy, native->win, NULL);
+        glXMakeCurrent(native->dpy, None, NULL);
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
     }
@@ -527,8 +529,6 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
         if (epoxy_has_glx_extension(native->dpy, native->screen, "MESA_release_buffers")) {
             glXReleaseBuffersMESA(native->dpy, native->win);
         }
-        glXDestroyWindow(native->dpy, native->win);
-        native->win = 0;
     }
 
     if (end_capture_xerrors(native->dpy)) {
