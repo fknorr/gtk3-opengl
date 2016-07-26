@@ -118,6 +118,7 @@ gtk_gl_canvas_class_init(GtkGLCanvasClass *klass) {
 
 void
 gtk_gl_canvas_realize(GtkWidget *wid) {
+    puts("gtk_gl_canvas_realize()");
     GtkGLCanvas *canvas = GTK_GL_CANVAS(wid);
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 
@@ -210,10 +211,13 @@ gtk_gl_canvas_init(GtkGLCanvas *canvas) {
 	priv->native = gtk_gl_canvas_native_new();
 	priv->is_dummy = TRUE;
 
+    puts("gtk_gl_canvas_init() 1");
+
     gtk_widget_set_can_focus(GTK_WIDGET(canvas), TRUE);
     gtk_widget_set_receives_default(GTK_WIDGET(canvas), TRUE);
     gtk_widget_set_has_window(GTK_WIDGET(canvas), TRUE);
     gtk_widget_set_redraw_on_allocate(GTK_WIDGET(canvas), FALSE);
+    puts("gtk_gl_canvas_init() 2");
 
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(canvas),
             "double-buffered")) {
@@ -224,6 +228,7 @@ gtk_gl_canvas_init(GtkGLCanvas *canvas) {
 
     g_signal_connect(G_OBJECT(canvas), "configure-event", 
             G_CALLBACK(gtk_gl_canvas_configure), NULL);
+    puts("gtk_gl_canvas_init() 3");
 }
 
 
