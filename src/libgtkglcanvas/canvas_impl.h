@@ -36,6 +36,10 @@ struct _GtkGLCanvas_Priv {
 
 GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
 
+void gtk_gl_canvas_native_realize(GtkGLCanvas *canvas);
+
+void gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas);
+
 GdkWindow *gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);
 

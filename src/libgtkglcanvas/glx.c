@@ -156,6 +156,15 @@ gtk_gl_canvas_native_new() {
 }
 
 
+void gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+}
+
+
+void gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
+}
+
+
+
 static gboolean
 gtk_gl_canvas_init_native(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);

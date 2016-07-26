@@ -81,7 +81,7 @@ gtk_gl_visual_free(GtkGLVisual *visual) {
 struct _GtkGLCanvas_NativePriv {
     HWND win;  // The canvas child window
 	HDC parent_dc, win_dc;
-    HGLRC glc;
+    HGLRC dummy_glc, glc;
 };
 
 
@@ -104,6 +104,57 @@ gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
 		DestroyWindow(native->win);
 		native->win = NULL;
 	}
+}
+
+
+void
+gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+
+    HWND hwnd = GDK_WINDOW_HWND(priv->win);
+    native->parent_dc = GetDC(hwnd);
+    if (!native->parent_dc) {
+        g_warning("Unable to get parent DC");
+        warn_last_error();
+        return;
+    }
+
+    PIXELFORMATDESCRIPTOR pfd = { sizeof(PIXELFORMATDESCRIPTOR), 1,
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, 32, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PFD_MAIN_PLANE, 0, 0, 0, 0 };
+
+    int pixel_format = ChoosePixelFormat(native->parent_dc, &pfd);
+    if (!pixel_format || !SetPixelFormat(native->parent_dc,
+            pixel_format, &pfd)) {
+        g_warning("Unable to choose/set dummy OpenGL pixel format");
+        warn_last_error();
+        return;
+    }
+
+    native->dummy_glc = wglCreateContext(native->parent_dc);
+    if (!native->dummy_glc) {
+        g_warning("Unable to wglCreate dummy context");
+        warn_last_error();
+        return;
+    }
+}
+
+
+void
+gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas) {
+	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+	GtkGLCanvas_NativePriv *native = priv->native;
+
+    if (native->parent_dc) {
+        if (native->dummy_glc) {
+            wglMakeCurrent(native->parent_dc, NULL);
+            wglDeleteContext(native->dummy_glc);
+            native->dummy_glc = NULL;
+        }
+        ReleaseDC(GDK_WINDOW_HWND(priv->win), native->parent_dc);
+        native->parent_dc = NULL;
+    }
 }
 
 
@@ -167,17 +218,19 @@ gtk_gl_canvas_enumerate_visuals(GtkGLCanvas *canvas) {
 
     HWND hwnd = GDK_WINDOW_HWND(priv->win);
 
-	if (!native->parent_dc) {
-        native->parent_dc = GetDC(hwnd);
-    }
-	if (!native->parent_dc) {
-		g_warning("Canvas does not have a DC, returning empty visual list");
+	if (!native->parent_dc || !native->dummy_glc) {
+		g_warning("Canvas does not have a dummy context, returning empty visual list");
+		return gtk_gl_visual_list_new(FALSE, 0);
+	}
+
+    if (!wglMakeCurrent(native->parent_dc, native->dummy_glc)) {
+        g_warning("Unable to make dummy context current, returning empty visual list");
 		return gtk_gl_visual_list_new(FALSE, 0);
 	}
 
 	formats = g_malloc(MAX_NFORMATS * sizeof *formats);
 	if (!epoxy_has_wgl_extension(native->parent_dc, "WGL_ARB_pixel_format")
-            && !wglChoosePixelFormatARB(native->parent_dc, iattribs, fattribs,
+            || !wglChoosePixelFormatARB(native->parent_dc, iattribs, fattribs,
             MAX_NFORMATS, formats, &n_formats)) {
 		g_warning("Unable to wglChoosePixelFormatARB(), returning "
 				"empty visual list");
@@ -423,7 +476,7 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
     GtkGLCanvas_NativePriv *native = priv->native;
 	if (native->glc) {
 		assert(native->win_dc);
-    	wglSwapLayerBuffers(native->win_dc, WGL_SWAP_MAIN_PLANE);
+        wglSwapLayerBuffers(native->win_dc, WGL_SWAP_MAIN_PLANE);
 	}
 }
 
