@@ -39,6 +39,8 @@ GtkGLCanvas_NativePriv *gtk_gl_canvas_native_new(void);
 GdkWindow *gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);
 
+void gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas);
+
 gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);
 

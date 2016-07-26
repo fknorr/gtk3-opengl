@@ -150,9 +150,12 @@ gtk_gl_canvas_clear(GtkGLCanvas *canvas) {
 		gtk_gl_canvas_native_destroy_context(canvas);
     }
     if (priv->surface) {
+        GdkWindow *old_surface = priv->surface;
         gdk_window_destroy(priv->surface);
+        gtk_gl_canvas_native_destroy_surface(canvas);
         priv->surface = NULL;
     }
+    priv->is_dummy = TRUE;
 }
 
 
@@ -178,9 +181,10 @@ gtk_gl_canvas_configure_surface(GtkGLCanvas *canvas) {
 
         gdk_window_move_resize(priv->surface, allocation.x, allocation.y,
             allocation.width, allocation.height);
+
+        gdk_display_sync(gdk_window_get_display(priv->win));
     }
 
-    gdk_display_sync(gdk_window_get_display(priv->win));
     gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 
@@ -209,6 +213,7 @@ gtk_gl_canvas_init(GtkGLCanvas *canvas) {
     gtk_widget_set_can_focus(GTK_WIDGET(canvas), TRUE);
     gtk_widget_set_receives_default(GTK_WIDGET(canvas), TRUE);
     gtk_widget_set_has_window(GTK_WIDGET(canvas), TRUE);
+    gtk_widget_set_redraw_on_allocate(GTK_WIDGET(canvas), FALSE);
 
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(canvas),
             "double-buffered")) {
@@ -268,7 +273,10 @@ gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visu
     }
     
     priv->surface = gtk_gl_canvas_native_create_surface(canvas, visual);
+    GdkWindowType type = gdk_window_get_window_type(priv->surface);
+    printf("type = %d, Child = %d\n", (int) type, (int) GDK_WINDOW_CHILD);
     if (priv->surface) {
+        gdk_window_show(priv->surface);
         gdk_window_set_pass_through(priv->surface, TRUE);
         return TRUE;
     }
@@ -341,9 +349,7 @@ void
 gtk_gl_canvas_destroy_context(GtkGLCanvas *canvas) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	g_assert(!priv->is_dummy);
-	gtk_gl_canvas_native_destroy_context(canvas);
-
-	priv->is_dummy = TRUE;
+    gtk_gl_canvas_clear(canvas);
 	gtk_widget_queue_draw(GTK_WIDGET(canvas));
 }
 

@@ -346,7 +346,6 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
     XSetWindowAttributes swa;
     memset(&swa, 0, sizeof swa);
     swa.colormap = XCreateColormap(native->dpy, parent, vinfo->visual, AllocNone);
-    swa.event_mask = StructureNotifyMask;
 
     GtkAllocation allocation;
     gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
@@ -354,9 +353,6 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
     native->win = XCreateWindow(native->dpy, parent, 0, 0, allocation.width,
             allocation.height, 0, vinfo->depth, InputOutput,
             vinfo->visual, CWBorderPixel | CWColormap | CWEventMask, &swa);
-    if (native->win) {
-        XMapWindow(native->dpy, native->win);
-    }
 
     XFree(vinfo);
     
@@ -368,6 +364,16 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
 
     return gdk_x11_window_foreign_new_for_display(
             gdk_window_get_display(priv->win), native->win);
+}
+
+
+void gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
+    GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(canvas)->native;
+
+    if (native->win) {
+        XDestroyWindow(native->dpy, native->win);
+        native->win = None;
+    }
 }
 
 
