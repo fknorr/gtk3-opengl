@@ -132,7 +132,7 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
             
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, 0 /* attribute_mask */);
-    gdk_window_set_user_data(priv->win, wid);
+    gtk_widget_register_window(wid, priv->win);
     gtk_widget_set_window(wid, priv->win);
 
 	static GdkRGBA black = { 0, 0, 0, 1 };
@@ -277,6 +277,8 @@ gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visu
     
     priv->surface = gtk_gl_canvas_native_create_surface(canvas, visual);
     if (priv->surface) {
+        gtk_widget_register_window(GTK_WIDGET(canvas), priv->surface);
+        gdk_window_set_events(priv->surface, GDK_EXPOSURE_MASK);
         gdk_window_show(priv->surface);
         gdk_window_set_pass_through(priv->surface, TRUE);
         return TRUE;

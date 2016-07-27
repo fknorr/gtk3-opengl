@@ -355,13 +355,14 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
     XSetWindowAttributes swa;
     memset(&swa, 0, sizeof swa);
     swa.colormap = XCreateColormap(native->dpy, parent, vinfo->visual, AllocNone);
+    swa.backing_store = NotUseful;
 
     GtkAllocation allocation;
     gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
 
     native->win = XCreateWindow(native->dpy, parent, 0, 0, allocation.width,
-            allocation.height, 0, vinfo->depth, InputOutput,
-            vinfo->visual, CWBorderPixel | CWColormap | CWEventMask, &swa);
+            allocation.height, 0, vinfo->depth, InputOutput, vinfo->visual,
+            CWBorderPixel | CWColormap | CWEventMask | CWBackingStore, &swa);
 
     XFree(vinfo);
     
