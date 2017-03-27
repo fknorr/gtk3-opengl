@@ -58,6 +58,7 @@
 
 #include <gtkgl/visual.h>
 #include <gtkgl/canvas.h>
+#include <gtkgl/ext.h>
 #include "canvas_impl.h"
 
 
@@ -562,3 +563,10 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
         glXSwapBuffers(native->dpy, native->win);
     }
 }
+
+
+GtkGLProc *
+gtk_gl_get_proc_address(const char *name) {
+    return glXGetProcAddress((const GLubyte*) name);
+}
+

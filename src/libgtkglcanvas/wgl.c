@@ -18,6 +18,7 @@
  */
 
 #include <gtkgl/canvas.h>
+#include <gtkgl/ext.h>
 #include "canvas_impl.h"
 
 #include <stdlib.h>
@@ -459,3 +460,10 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
     	wglSwapLayerBuffers(native->dc, WGL_SWAP_MAIN_PLANE);
 	}
 }
+
+
+GtkGLProc *
+gtk_gl_get_proc_address(const char *name) {
+    return wglGetProcAddress(name);
+}
+
