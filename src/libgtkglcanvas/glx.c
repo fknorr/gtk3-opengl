@@ -527,7 +527,7 @@ gtk_gl_canvas_native_destroy_context(GtkGLCanvas *canvas) {
 
     if (native->glc) {
         // Context is not destroyed until it is no longer current
-        glXMakeCurrent(native->dpy, native->win, NULL);
+        glXMakeCurrent(native->dpy, None, NULL);
 		glXDestroyContext(native->dpy, native->glc);
 		native->glc = NULL;
     }
