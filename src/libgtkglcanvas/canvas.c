@@ -129,7 +129,7 @@ gtk_gl_canvas_realize(GtkWidget *wid) {
             | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK
             | GDK_POINTER_MOTION_HINT_MASK | GDK_SCROLL_MASK
             | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK;
-            
+
     priv->win = gdk_window_new(gtk_widget_get_parent_window(wid),
             &attributes, 0 /* attribute_mask */);
     gtk_widget_register_window(wid, priv->win);
@@ -152,6 +152,7 @@ gtk_gl_canvas_clear(GtkGLCanvas *canvas) {
 		gtk_gl_canvas_native_destroy_context(canvas);
     }
     if (priv->surface) {
+        gtk_widget_unregister_window(GTK_WIDGET(canvas), priv->surface);
         GdkWindow *old_surface = priv->surface;
         gdk_window_destroy(priv->surface);
         gtk_gl_canvas_native_destroy_surface(canvas);
@@ -225,7 +226,7 @@ gtk_gl_canvas_init(GtkGLCanvas *canvas) {
         g_warning("Unable to disable double buffering on canvas widget");
     }
 
-    g_signal_connect(G_OBJECT(canvas), "configure-event", 
+    g_signal_connect(G_OBJECT(canvas), "configure-event",
             G_CALLBACK(gtk_gl_canvas_configure), NULL);
 }
 
@@ -274,7 +275,7 @@ gtk_gl_canvas_before_create_context(GtkGLCanvas *canvas, const GtkGLVisual *visu
 	if (!priv->is_dummy) {
 		gtk_gl_canvas_clear(canvas);
     }
-    
+
     priv->surface = gtk_gl_canvas_native_create_surface(canvas, visual);
     if (priv->surface) {
         gtk_widget_register_window(GTK_WIDGET(canvas), priv->surface);
