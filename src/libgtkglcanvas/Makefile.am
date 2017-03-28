@@ -38,7 +38,8 @@ __top_builddir__libgtkglcanvas_la_SOURCES = \
 gtkgldir = $(includedir)/gtkgl
 gtkgl_HEADERS = \
     $(top_srcdir)/include/gtkgl/canvas.h \
-    $(top_srcdir)/include/gtkgl/visual.h
+    $(top_srcdir)/include/gtkgl/visual.h \
+    $(top_srcdir)/include/gtkgl/ext.h
 
 if HAVE_GLADEUI
 gladecatdir = $(GLADEUI_CATDIR)

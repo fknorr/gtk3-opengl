@@ -18,6 +18,7 @@
  */
 
 #include <gtkgl/canvas.h>
+#include <gtkgl/ext.h>
 #include "canvas_impl.h"
 
 #include <stdlib.h>
@@ -178,7 +179,7 @@ gtk_gl_canvas_native_register_window_class(void) {
     WNDCLASSEX klass = { sizeof(WNDCLASSEX), CS_OWNDC, DefWindowProc, 0, 0,
             GetModuleHandle(NULL), NULL, NULL, NULL, NULL, "GtkGLCanvas",
             NULL };
-            
+
     if (!RegisterClassEx(&klass)) {
         warn_last_error();
         g_warning("Unable to register surface window class");
@@ -367,7 +368,7 @@ gtk_gl_canvas_native_before_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
-    
+
     native->win_dc = GetDC(GDK_WINDOW_HWND(priv->win));
     if (!native->win_dc) {
         warn_last_error();
@@ -523,5 +524,11 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
             g_warning("Unable to swap buffers");
         }
 	}
+}
+
+
+GtkGLProc *
+gtk_gl_get_proc_address(const char *name) {
+    return wglGetProcAddress(name);
 }
 
