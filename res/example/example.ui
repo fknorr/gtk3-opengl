@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
+<!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <requires lib="gtkgl" version="0.0"/>
@@ -95,14 +95,69 @@
             <property name="can_focus">False</property>
             <property name="spacing">4</property>
             <child>
-              <object class="GtkGLCanvas" id="canvas">
+              <object class="GtkBox" id="top-margin-box">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="destroy" handler="example_stop_animation" swapped="no"/>
-                <signal name="draw" handler="example_draw" swapped="no"/>
-                <signal name="leave-notify-event" handler="example_mouse_leave" swapped="no"/>
-                <signal name="motion-notify-event" handler="example_mouse_move" swapped="no"/>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="top-margin-label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Top margin</property>
+                    <attributes>
+                      <attribute name="scale" value="1"/>
+                      <attribute name="foreground" value="#88888a8a8585"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="left-margin-box">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="left-margin-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Left margin</property>
+                        <property name="angle">90</property>
+                        <attributes>
+                          <attribute name="foreground" value="#88888a8a8585"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkGLCanvas" id="canvas">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="destroy" handler="example_stop_animation" swapped="no"/>
+                        <signal name="draw" handler="example_draw" swapped="no"/>
+                        <signal name="leave-notify-event" handler="example_mouse_leave" swapped="no"/>
+                        <signal name="motion-notify-event" handler="example_mouse_move" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -229,6 +284,9 @@
           </packing>
         </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
   </object>
   <object class="GtkDialog" id="context-chooser">
@@ -748,6 +806,9 @@
     <action-widgets>
       <action-widget response="1">context-create-button</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="filter-dialog">
     <property name="can_focus">False</property>
@@ -849,5 +910,8 @@
     <action-widgets>
       <action-widget response="1">filter-apply-button</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
 </interface>
