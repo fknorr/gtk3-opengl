@@ -183,7 +183,8 @@ gtk_gl_canvas_configure_surface(GtkGLCanvas *canvas) {
         GtkAllocation allocation;
         gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
 
-        gdk_window_move_resize(priv->surface, allocation.x, allocation.y,
+        // Window position is relative to Widget, so offset is (0, 0)
+        gdk_window_move_resize(priv->surface, 0, 0,
             allocation.width, allocation.height);
 
         gdk_display_sync(gdk_window_get_display(priv->win));

@@ -366,7 +366,7 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
             CWBorderPixel | CWColormap | CWEventMask | CWBackingStore, &swa);
 
     XFree(vinfo);
-    
+
     if (!native->win || have_xerror(native->dpy)) {
         g_warning("Creating GLX surface window failed");
         end_capture_xerrors(native->dpy);
