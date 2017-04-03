@@ -390,7 +390,8 @@ gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
 
 
 void
-gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width, unsigned height) {
+gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width,
+        unsigned height) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
 

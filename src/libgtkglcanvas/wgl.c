@@ -115,6 +115,18 @@ gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
 
 
 void
+gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width,
+        unsigned height) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
+    g_assert(native->win);
+
+    SetWindowPos(native->win, NULL, 0, 0, (int) width, (int) height, SWP_NOMOVE);
+}
+
+
+void
 gtk_gl_canvas_native_realize(GtkGLCanvas *canvas) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
@@ -187,7 +199,7 @@ gtk_gl_canvas_native_register_window_class(void) {
 }
 
 
-GdkWindow *
+gboolean
 gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visual) {
 	GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
 	GtkGLCanvas_NativePriv *native = priv->native;
@@ -221,12 +233,11 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
         goto fail;
 	}
 
-    GdkDisplay *display = gdk_window_get_display(priv->win);
-    return gdk_win32_window_foreign_new_for_display(display, native->win);
+    return TRUE;
 
 fail:
     gtk_gl_canvas_native_destroy_context(canvas);
-    return NULL;
+    return FALSE;
 }
 
 
@@ -529,6 +540,6 @@ gtk_gl_canvas_native_swap_buffers(GtkGLCanvas *canvas) {
 
 GtkGLProc *
 gtk_gl_get_proc_address(const char *name) {
-    return wglGetProcAddress(name);
+    return (GtkGLProc*) wglGetProcAddress(name);
 }
 
