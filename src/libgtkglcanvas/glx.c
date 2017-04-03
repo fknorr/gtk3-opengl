@@ -397,6 +397,7 @@ gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width, unsigne
     g_assert(native->win);
 
     XResizeWindow(native->dpy, native->win, (int) width, (int) height);
+    XSync(native->dpy, False);
 }
 
 
