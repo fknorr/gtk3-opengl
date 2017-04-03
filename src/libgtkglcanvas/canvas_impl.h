@@ -27,7 +27,8 @@ typedef struct _GtkGLCanvas_Priv GtkGLCanvas_Priv;
 typedef struct _GtkGLCanvas_NativePriv GtkGLCanvas_NativePriv;
 
 struct _GtkGLCanvas_Priv {
-    GdkWindow *win, *surface;
+    GdkWindow *win;
+    gboolean has_surface;
 	GtkGLCanvas_NativePriv *native;
 	gboolean is_dummy;
     gboolean double_buffered;
@@ -40,10 +41,13 @@ void gtk_gl_canvas_native_realize(GtkGLCanvas *canvas);
 
 void gtk_gl_canvas_native_unrealize(GtkGLCanvas *canvas);
 
-GdkWindow *gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas,
+gboolean gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);
 
 void gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas);
+
+void gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width,
+        unsigned height);
 
 gboolean gtk_gl_canvas_native_create_context(GtkGLCanvas *canvas,
         const GtkGLVisual *visual);

@@ -334,7 +334,7 @@ gtk_gl_describe_visual(const GtkGLVisual *visual, GtkGLFramebufferConfig *out) {
 }
 
 
-GdkWindow *
+gboolean
 gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visual) {
     GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
     GtkGLCanvas_NativePriv *native = priv->native;
@@ -370,21 +370,33 @@ gtk_gl_canvas_native_create_surface(GtkGLCanvas *canvas, const GtkGLVisual *visu
     if (!native->win || have_xerror(native->dpy)) {
         g_warning("Creating GLX surface window failed");
         end_capture_xerrors(native->dpy);
-        return NULL;
+        return FALSE;
     }
 
-    return gdk_x11_window_foreign_new_for_display(
-            gdk_window_get_display(priv->win), native->win);
+    XMapWindow(native->dpy, native->win);
+    return TRUE;
 }
 
 
-void gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
+void
+gtk_gl_canvas_native_destroy_surface(GtkGLCanvas *canvas) {
     GtkGLCanvas_NativePriv *native = GTK_GL_CANVAS_GET_PRIV(canvas)->native;
 
     if (native->win) {
         XDestroyWindow(native->dpy, native->win);
         native->win = None;
     }
+}
+
+
+void
+gtk_gl_canvas_native_resize_surface(GtkGLCanvas *canvas, unsigned width, unsigned height) {
+    GtkGLCanvas_Priv *priv = GTK_GL_CANVAS_GET_PRIV(canvas);
+    GtkGLCanvas_NativePriv *native = priv->native;
+
+    g_assert(native->win);
+
+    XResizeWindow(native->dpy, native->win, (int) width, (int) height);
 }
 
 

@@ -365,6 +365,7 @@ draw_with_vaos(float aspect) {
 // Handler for the canvas' "draw" event
 gboolean
 example_draw(void) {
+    printf("draw\n");
 	GtkAllocation alloc;
 	float aspect;
 
